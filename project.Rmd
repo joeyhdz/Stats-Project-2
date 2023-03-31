@@ -1,0 +1,32 @@
+---
+always_allow_html: TRUE
+output: 
+  html_document: 
+    code_folding: hide
+  github_document: default
+---
+
+<hr>
+<center><h2>Data Read-in / Discovery</h2></center>
+<hr>
+
+```{r, message=F, warning=F, fig.align='center'}
+
+#install.packages('aplore3')
+library(aplore3)
+
+df<- glow_bonemed
+
+head(df)
+
+# for a look at a brief data description uncomment lines below:
+# ?glow_bonemed 
+# ?glow500
+
+```
+
+```{r, message=F, warning=F, fig.align='center'}
+library(GGally)
+ggpairs(df)
+
+```
