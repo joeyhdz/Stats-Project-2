@@ -10,6 +10,7 @@ output:
 <center><h2>Data Read-in / Discovery</h2></center>
 <hr>
 
+# Loading Initial Packages For Cleaning
 ```{r, message=F, warning=F, fig.align='center'}
 #install.packages('janitor')
 #install.packages('aplore3')
@@ -18,15 +19,27 @@ library(aplore3) # for our dataset
 library(tidyverse) # tools for viz/cleaning/etc
 library(janitor) # tools for cleaning
 library(visdat) # visualize our missing data
+```
 
-df<- glow_bonemed # adding dataset into df call. 
+# Data Inspection
 
-glimpse(df) # looking at our data from afar
-# alot of categorical vars (factor encoding)
+Takeaways: 
+  
+  - Looking at the data we see that some of the weight values(in KG) are very low. assuming the low weight belongs to individuals who are older, maybe bed ridden, and have instances of sarcopenia this is plausible... but also it's good to keep this in mind moving forward. 
+  
+  - raterisk: this is a completely subjective topic. maybe interesting to see, but not expected that this will provide much insight. 
+  
+```{r, message=F, warning=F, fig.align='center'}
+# adding dataset into df call.
+df<- glow_bonemed  
+
+# looking at our data from afar 
+glimpse(df) # alot of categorical vars (factor encoding)
 
 # for a look at a brief data description uncomment lines below:
-# ?glow_bonemed 
-# ?glow500
+#?glow_bonemed 
+#?glow500
+
 
 # check for duplicated data
 get_dupes(df, sub_id) # no duplicated data here which is what we'd like to see. 
@@ -34,12 +47,148 @@ get_dupes(df, site_id) # makes sense that we would have duplicated study sites.
 get_dupes(df, phy_id) # makes sense that we would have duplicated physician id codes.
 
 # check for missing values
-vis_miss(df) # great! no missing values. 
+vis_miss(df) # great! No missing values. 
+
+# visualizing the summary of our data. 
+summary(df)
+```
+
+<hr>
+<center><h2>EDA</h2></center>
+<hr>
+
+
+# EDA - Categorical
+Step one: visualize what the Yes/Nos look like in terms of fractures. 
+  - The plot below will show us without yet incorporating predictors, what is the percentages of yes/no that we are seeing in the data. 
+  - Findings are that it's not a very balanced split. 75% of the data have NO for fracture.
+  when we make predictive probabilities how will this influence the result? will we find that they are around this value with some higher/lower? *potential sanity check to our results later*
+```{r, message=F, warning=F, fig.align='center'}
+library(ggplot2)
+
+g <- df %>% # allows us to gather table of y/n fracture, the cnt, and percent. 
+  group_by(fracture) %>% 
+  summarise(cnt = n()) %>% 
+  mutate(perc=round(cnt/sum(cnt),4))
+
+g # shows the result of the above
+
+# bar plot visual of the above. 
+ggplot(g, aes(x = fracture, y = perc, colour = fracture)) + 
+  geom_bar(aes(fill = fracture), show.legend = F, stat = 'identity') +
+  ylab('Proportion of Fracture') + xlab("Fracture") +
+  geom_text(aes(label = paste0(perc *100, "%")), vjust = 2, size = 5, color = 'black')
 
 ```
 
+Fracture - Menopause before age 45
+  - When and individual did not have menopause before age 45 (pre-menopause) the chances of having a fracture are much higher even though there is only a 25% of having a fracture.
+  - If you are in the no premenopause gorup, it is approx 80% chance that you have a fracture. it decreases as for those who did have premenopause. 
+  
 ```{r, message=F, warning=F, fig.align='center'}
-library(GGally)
-ggpairs(df)
+
+g2 <- df %>% 
+  group_by(fracture, premeno) %>% 
+  summarise(cnt=n()) %>% 
+  mutate(perc=round(cnt/sum(cnt),4))%>% 
+  arrange(desc(perc))
+
+g2
+
+ggplot(g2[c(2,3),], aes(x = reorder(premeno, -perc), y = perc, colour = premeno))+
+  geom_bar(aes(fill = premeno), show.legend = T, stat = 'identity') + 
+  ylab('Proportion of Disease') +
+  xlab('Menopause before age 45')+
+  geom_text(aes(label = paste0(perc *100, "%")), vjust = 2, size = 5, color = 'black')
+
+```
+
+
+Fracture - Arms are needed to stand from a chair
+```{r, message=F, warning=F, fig.align='center'}
+
+g3 <- df %>% 
+  group_by(fracture, armassist) %>% 
+  summarise(cnt=n()) %>% 
+  mutate(perc=round(cnt/sum(cnt),4))%>% 
+  arrange(desc(perc))
+
+g3
+
+ggplot(g3[c(2,3),], aes(x = reorder(armassist, -perc), y = perc, colour = armassist))+
+  geom_bar(aes(fill = armassist), show.legend = T, stat = 'identity') + 
+  ylab('Proportion of Disease') +
+  xlab('Arm needed to stand from chair')+
+  geom_text(aes(label = paste0(perc *100, "%")), vjust = 2, size = 5, color = 'black')
+
+```
+
+Fracture - bmi - body mass index
+  - some domain expertise here: there is evidence that individuals who are heavier tend to have less instances of osteoperosis, and hip/bone fractures. this is unsuprising to see here and is a good depiction of prior research. 
+  - including this variable into the model should be something that is significat based on the trend we see, although the instance of "underwieght" is interesting and may require some investigation. 
+```{r, message=F, warning=F, fig.align='center'}
+# transforming numeric into categorical using widley accepted BMI categories
+df$bmi.cat <- ifelse(df$bmi < 18.5, "Underweight", 
+                              ifelse(df$bmi < 25, "Healthy weight",
+                                     ifelse(df$bmi < 30, "Overweight", "Obesity")))
+
+g4 <- df %>% 
+  group_by(fracture, bmi.cat) %>% 
+  summarise(cnt=n()) %>% 
+  mutate(perc=round(cnt/sum(cnt),4))%>% 
+  arrange(desc(perc))
+
+g4
+
+ggplot(g4[c(2,3,5,8),], aes(x = reorder(bmi.cat, -perc), y = perc, colour = bmi.cat))+
+  geom_bar(aes(fill = bmi.cat), show.legend = T, stat = 'identity') + 
+  ylab('Proportion of Disease') +
+  xlab('BMI Categories')+
+  geom_text(aes(label = paste0(perc *100, "%")), vjust = 2, size = 5, color = 'black')
+
+```
+
+
+# EDA - Numerical
+
+We would like to look at some of the relationships for the numerical categories in our data. 
+Before we can do this it is important for us to create a numerical category for fracture so that we can create our LOESS plot. 
+  - Note to smooth the curve out some, we can use span values (such as 1.25), either way this is artifical humps and bumps, try not to pay attention to the overall movements and look instead at the trend/association of how the data moves with increaseing/decreaseing values. 
+
+  - Note for complex models We can add categorical values to this (interactions)  | also facet wrapping will allow us to view them sepearate. 
+```{r, message=F, warning=F, fig.align='center'}
+# numercial form of fracture
+df$fracture.num <- ifelse(df$fracture == "Yes",1,0) # Yes = 1 | No = 0
+```
+
+LOESS - WEIGHT: no real observable assocation 
+```{r, message=F, warning=F, fig.align='center'}
+df %>% ggplot(aes(x = weight, y = fracture.num)) + 
+  geom_point() + 
+  geom_smooth(method = "loess", size = 1) + ylim(-.2, 1.2)
+
+```
+
+LOESS - AGE: increasing with older age
+```{r, message=F, warning=F, fig.align='center'}
+df %>% ggplot(aes(x = age, y = fracture.num)) +
+  geom_point() +
+  geom_smooth(method = "loess", size = 1) + ylim(-.2, 1.2)
+
+```
+
+LOESS - HEIGHT: Decreases when height increases 
+```{r, message=F, warning=F, fig.align='center'}
+df %>% ggplot(aes(x = height, y = fracture.num)) + 
+  geom_point()+
+  geom_smooth(method = "loess", size = 1) + ylim(-.2, 1.2)
+```
+
+LOESS - fracscore (Fracture Risk Score (Composite Risk Score))
+  - Higher score = More risk for fracture?
+```{r, message=F, warning=F, fig.align='center'}
+df %>% ggplot(aes(x = fracscore, y = fracture.num)) + 
+  geom_point()+
+  geom_smooth(method = "loess", size = 1) + ylim(-.2, 1.2)
 
 ```
