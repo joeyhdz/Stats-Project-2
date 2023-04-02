@@ -11,17 +11,30 @@ output:
 <hr>
 
 ```{r, message=F, warning=F, fig.align='center'}
-
+#install.packages('janitor')
 #install.packages('aplore3')
-library(aplore3)
 
-df<- glow_bonemed
+library(aplore3) # for our dataset
+library(tidyverse) # tools for viz/cleaning/etc
+library(janitor) # tools for cleaning
+library(visdat) # visualize our missing data
 
-head(df)
+df<- glow_bonemed # adding dataset into df call. 
+
+glimpse(df) # looking at our data from afar
+# alot of categorical vars (factor encoding)
 
 # for a look at a brief data description uncomment lines below:
 # ?glow_bonemed 
 # ?glow500
+
+# check for duplicated data
+get_dupes(df, sub_id) # no duplicated data here which is what we'd like to see. 
+get_dupes(df, site_id) # makes sense that we would have duplicated study sites.
+get_dupes(df, phy_id) # makes sense that we would have duplicated physician id codes.
+
+# check for missing values
+vis_miss(df) # great! no missing values. 
 
 ```
 
