@@ -466,76 +466,69 @@ library(ResourceSelection)
 library(car)
 
 # fitting an additive multiple logistic regression model
-simple <- glm(fracture ~ fracscore + smoke + armassist + momfrac + premeno + bmi.cat + height + age + bonemed + bonetreat, data = training, family ="binomial")
+simple <- glm(fracture ~ smoke + armassist + momfrac + premeno + bmi + height + age + bonemed + bonetreat + bonemed_fu, data = training, family ="binomial")
 
 # looking at coefficients
-simple.summary<- summary(simple)
+(simple.summary<- summary(simple))
 
 # looking for Multicollinearity
-simple.vif <- vif(simple)
+(simple.vif <- vif(simple))
 
 # AIC metric can help us compare against models with interactions later to determine if the interactions are important or not. 
-simple.AIC <- AIC(simple)
+(simple.AIC <- AIC(simple))
 
 # Hosmer-Lemeshow test
-simple.hlt <- hoslem.test(simple$y, fitted(simple))
+(simple.hlt <- hoslem.test(simple$y, fitted(simple)))
 ```
 
 Simple Model Coefficients and CIs
 ```{r, message=F, warning=F, fig.align='center'}
 # coefficient output for log. reg. model:
-simple.coef<- coef(simple) # normal coefficient output
-simple.exp<- exp(coef(simple)) # exp coefficient
+(simple.coef<- coef(simple)) # normal coefficient output
+(simple.exp<- exp(coef(simple))) # exp coefficient
 
 # confidence intervals
-simple.ci<- exp(confint(simple, level = .95)) # confidence interval @ .05 significance
+(simple.ci<- exp(confint(simple, level = .95))) # confidence interval @ .05 significance
 
 ```
 
+Reducing the model predictors:
+  - Some reduction is due to insignificance.
+  - Some predictors are kept however due to real world applicability. 
 
 ```{r, message=F, warning=F, fig.align='center'}
-
-# fitting an additive multiple logistic regression model
-simple1 <- glm(fracture ~ smoke + armassist + momfrac + premeno + bmi.cat + height + age + bonemed + bonetreat, data = training, family ="binomial")
-
-# looking at coefficients
-simple1.summary<-summary(simple1)
-
-# looking for Multicollinearity
-simple1.vif <- vif(simple1)
-
-# AIC metric can help us compare against models with interactions later to determine if the interactions are important or not. 
-simple1.aic <- AIC(simple1)
-
-# Hosmer-Lemeshow test
-simple1.hlt <- hoslem.test(simple1$y, fitted(simple1))
-```
-
-
-"Simple1" Model Coefficients and CIs
-```{r, message=F, warning=F, fig.align='center'}
-# coefficient output for log. reg. model:
-simple1.coef <- coef(simple1) # normal coefficient output
-simple1.exp <- exp(coef(simple1)) # exp coefficient
-
-# confidence intervals
-simple1.ci <- exp(confint(simple1, level = .95)) # confidence interval @ .05 significance
-
-```
-
-Keeping only statistically relevant predictors from the Simple model:
-
-```{r, message=F, warning=F, fig.align='center'}
-red.model <- glm(fracture~fracscore + bmi.cat + bonemed,
+red.model <- glm(fracture~ priorfrac+momfrac+age+bonetreat+bonemed_fu+bmi,
                  data = training,
                  family ="binomial")
 
-red.model.summary <- summary(red.model)
+# summary of coef. 
+summary(red.model)
+
+# AIC metric can help us compare against models with interactions later to determine if the interactions are important or not. 
+(red.aic <- AIC(red.model))
+
+# looking for Multicollinearity
+(red.vif <- vif(red.model)) # we do have a high VIF in bonetreat.
+
+# Hosmer-Lemeshow test
+(red.hlt <- hoslem.test(red.model$y, fitted(red.model)))
 
 ```
 
 
-Effect Plot one at a time (additive red.model):
+Reduced Model Coefficients and CIs
+```{r, message=F, warning=F, fig.align='center'}
+# coefficient output for log. reg. model:
+(red.coef<- coef(red.model)) # normal coefficient output
+(red.exp<- exp(coef(red.model))) # exp coefficient
+
+# confidence intervals
+(red.ci<- exp(confint(red.model, level = .95))) # confidence interval @ .05 significance
+
+```
+
+
+Effect Plot one at a time (Additive Reduced Model):
 
   - Because we are working with an additive model, plotting one by one is ok to do without losing much information. 
 
@@ -545,12 +538,14 @@ library(sjmisc)
 library(effects)
 
 # effect plot
-plot_model(simple, type = "pred", terms = "fracscore")
-plot_model(simple, type = "pred", terms = "bonemed")
-plot_model(simple, type = "pred", terms = "bmi.cat")
-
+plot_model(red.model, type = "pred", terms = "priorfrac")
+plot_model(red.model, type = "pred", terms = "momfrac")
+plot_model(red.model, type = "pred", terms = "age")
+plot_model(red.model, type = "pred",terms = "bmi")
+plot_model(red.model, type = "pred", terms = "bonetreat")
+plot_model(red.model, type = "pred", terms = "bonemed_fu")
 # identifies all of the high-order terms in a model and returns a list of "eff" or "effpoly" objects.
-all.effects <- allEffects(simple)
+all.effects <- allEffects(red.model)
 
 # plots the effect plosts
 plot(all.effects,multiline=T)
@@ -564,14 +559,13 @@ Effect Plot Combo:
 ```{r, message=F, warning=F, fig.align='center'}
 
 # effect plot
-plot_model(simple, type = "pred", terms = c("age","bonemed"))
-plot_model(simple, type = "pred", terms = c("age","bonetreat"))
-
-# effect plot
-plot_model(simple,type="pred",terms = c("smoke","momfrac"))
-
-# effect plot   
-plot_model(simple, type = "pred", terms = c("armassist","age[55,60,65,70,75,80,85,90]"))
+plot_model(red.model, type = "pred", terms = c("bonetreat","priorfrac"))
+plot_model(red.model, type = "pred", terms = c("age","bonetreat"))
+plot_model(red.model, type ="pred", terms = c("age","bonemed_fu"))
+plot_model(red.model, type = "pred", terms = c("age","priorfrac"))  
+plot_model(red.model, type = "pred", terms = c("bmi","bonetreat"))
+plot_model(red.model, type = "pred", terms = c("bmi","priorfrac"))
+plot_model(red.model, type = "pred", terms = c("momfrac","priorfrac")) 
 
 ```
 
@@ -592,53 +586,11 @@ simple.roc <- roc(response = test$fracture,
                   levels = c("No","Yes"))
 
 
-plot(simple.roc, print.thres= "best", col = "red", legend = T)
+plot(simple.roc, print.thres= "best", col = "red")
 ```
 
 
-<h4>Multiple Logistical Regression: "Simple1" Model ROC</h4>
-```{r, message=F, warning=F, fig.align='center'}
-
-# predicting probabilities on the testing data
-simple1.predprobs <- predict(simple1,test, type = 'response')
-#simple.predprobs
-
-simple1.roc <- roc(response = test$fracture,
-                  predictor = simple1.predprobs,
-                  levels = c("No","Yes"))
-
-
-plot(simple1.roc, print.thres= "best", col = "red", legend = T)
-```
-
-<h4>"Simple2" Model ROC</h4>
-```{r, message=F, warning=F, fig.align='center'}
-simple2 <- glm(fracture~priorfrac + premeno + momfrac + smoke + age,data = training,family = "binomial")
-
-# looking at coefficients
-simple2.summary<-summary(simple2)
-
-# looking for Multicollinearity
-simple2.vif <- vif(simple2)
-
-# AIC metric can help us compare against models with interactions later to determine if the interactions are important or not. 
-simple2.aic <- AIC(simple2)
-
-# Hosmer-Lemeshow test
-simple2.hlt <- hoslem.test(simple1$y, fitted(simple2))
-
-
-# predicting probabilities on the testing data
-simple2.predprobs <- predict(simple2,test, type = 'response')
-#simple.predprobs
-
-simple2.roc <- roc(response = test$fracture,
-                  predictor = simple2.predprobs,
-                  levels = c("No","Yes"))
-
-```
-
-<h4>Caret Model ROC</h4>
+<h4>Caret CV. Model ROC</h4>
 ```{r, message=F, warning=F, fig.align='center'}
 # parameters for train function
 fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, classProbs = T, summaryFunction = mnLogLoss)
@@ -647,7 +599,7 @@ fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, clas
 set.seed(12)
 
 # training CARET mult. logi. regression model 
-add.model <- train(fracture ~ fracscore+age+height+momfrac+smoke,
+add.model <- train(fracture~ priorfrac+momfrac+age+bonetreat+bonemed_fu+bmi,
                  data = training,
                  trControl = fitControl,
                  method = "glm",
@@ -732,38 +684,40 @@ df %>% ggplot(aes(x = height, y = fracture.num, color = raterisk)) +
   ylim(-.2, 1.2) + facet_wrap(~raterisk)
 
 
-# height | raterisk - potential interaction ?  
+# height | bonemed - potential interaction ?  
 df %>% ggplot(aes(x = bmi, y = fracture.num, color = bonemed)) +
   geom_point()+
   geom_smooth(method = "loess", size = 1, span = .75) +
   ylim(-.2, 1.2) + facet_wrap(~bonemed)
 
 
-# height | raterisk - potential interaction ?  
+# height | bonemed_fu - potential interaction ?  
 df %>% ggplot(aes(x = bmi, y = fracture.num, color = bonemed_fu)) +
   geom_point()+
   geom_smooth(method = "loess", size = 1, span = .75) +
   ylim(-.2, 1.2) + facet_wrap(~bonemed_fu)
 
-# height | raterisk - potential interaction ?  
+# height | bonetreat - potential interaction ?  
 df %>% ggplot(aes(x = bmi, y = fracture.num, color = bonetreat)) +
   geom_point()+
   geom_smooth(method = "loess", size = 1, span = .75) +
   ylim(-.2, 1.2) + facet_wrap(~bonetreat)
 
+
 ```
 
-```{r}
+```{r, message=F, warning=F, fig.align='center'}
 complex1 <- glm(fracture ~ bonemed + bonetreat + bonemed_fu + bmi + bmi:bonemed + bmi:bonetreat + bmi:bonemed_fu,
                 data = training,
                 family = "binomial")
 vif(complex1)
 AIC(complex1)
 summary(complex1)
+
+# printing out all AIC metrics (note they are based on training data not test data)
 cat("Simple:", simple.AIC,
-    "\nSimple1:",simple1.aic,
     "\nComplex1:", AIC(complex1),
-    "\nSimple2:",simple2.aic)
+    "\nRed Model:", red.aic)
 ```
 
 
@@ -778,13 +732,14 @@ fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, clas
 set.seed(12)
 
 # training CARET mult. logi. regression model 
-complex <- train(fracture ~ fracscore*age + age + height +
-                   momfrac + smoke,
+complex2 <- train(fracture~ priorfrac+momfrac+age+bonetreat+bonemed_fu+bmi +bonemed_fu:age +
+                    momfrac:priorfrac,
                  data = training,
                  trControl = fitControl,
                  method = "glm",
                  family = "binomial",
                  metric = "logLoss")
 
+summary(complex2)
 
 ```
