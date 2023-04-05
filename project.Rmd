@@ -34,6 +34,8 @@ Takeaways:
   
   - Duplicate data: There is instances of duplicated data in the site_id, phy_id. This makes sense since many sites will occur with repeating metrics and many physicians will also occur with those same metrics. 
   
+  - smoke has a very small sample of "Yes" (35)
+  
 ```{r, message=F, warning=F, fig.align='center'}
 # adding dataset into df call.
 df <- glow_bonemed  
@@ -55,7 +57,7 @@ df <- glow_bonemed
 #vis_miss(df) # great! No missing values. 
 
 # visualizing the summary of our data. 
-#summary(df)
+summary(df)
 ```
 
 <hr>
@@ -559,7 +561,6 @@ Effect Plot Combo:
   
   - Provides an intuitive way to understand impact of each predictor on the outcome, while holding the other pred. constant. 
   
-  
 ```{r, message=F, warning=F, fig.align='center'}
 
 # effect plot
@@ -656,10 +657,10 @@ add.model <- train(fracture ~ fracscore+age+height+momfrac+smoke,
 summary(add.model)
 
 # make preds on the probabilty of each class in TRANING data
-add.model.predprob <- predict(add.model,training, type = "prob")
+add.model.predprob <- predict(add.model,test, type = "prob")
 
 # compute the ROC curve
-add.model.roc <- roc(response = training$fracture, predictor = add.model.predprob$Yes, levels = c("Yes","No"))
+add.model.roc <- roc(response = test$fracture, predictor = add.model.predprob$Yes, levels = c("Yes","No"))
 
 
 # plot ROC curve
@@ -672,13 +673,118 @@ legend("bottomright",
 
 # get coord (threshold)
 coords <- coords(add.model.roc, "best", best.method = "closest.topleft", ret = "threshold")
+
 # get optimal threshold
 threshold <- coords[[1]] # currently this is 0.2472446
+
 # make changes to threshold if desired
 adj.threshold <- threshold + 0
+
 # adjust the labeling by the desired threshold
 pred_label <- as.factor(ifelse(add.model.predprob$Yes >= adj.threshold, "Yes","No"))
 
-confusionMatrix(pred_label, training$fracture)
+# print confusion matrix
+confusionMatrix(pred_label, test$fracture)
+
+```
+
+<hr>
+# Objective 2
+<hr>
+
+<h4> Investigating potential for interactions </h4>
+
+```{r, message=F, warning=F, fig.align='center'}
+# age | bmi.cat - potential interaction ? 
+df %>% ggplot(aes(x = age, y = fracture.num, color = bmi.cat)) +
+  geom_point()+
+  geom_smooth(method = "loess", size = 1, span = .75) +
+  ylim(-.2, 1.2) + facet_wrap(~bmi.cat)
+
+# height | bmi.cat - potential interaction ? 
+df %>% ggplot(aes(x = height, y = fracture.num, color = bmi.cat)) +
+  geom_point()+
+  geom_smooth(method = "loess", size = 1, span = .75) +
+  ylim(-.2, 1.2) + facet_wrap(~bmi.cat)
+
+# bmi | fracscore - potential interaction ?  
+df %>% ggplot(aes(x = bmi, y = fracture.num, color = armassist)) +
+  geom_point()+
+  geom_smooth(method = "loess", size = 1, span = .75) +
+  ylim(-.2, 1.2) + facet_wrap(~armassist)
+
+# bmi | fracscore - potential interaction ?  
+df %>% ggplot(aes(x = bmi, y = fracture.num, color = fracscore)) +
+  geom_point()+
+  geom_smooth(method = "loess", size = 1, span = .75) +
+  ylim(-.2, 1.2) + facet_wrap(~fracscore)
+
+# bmi | priorfrac - potential interaction ?  
+df %>% ggplot(aes(x = bmi, y = fracture.num, color = priorfrac )) +
+  geom_point()+
+  geom_smooth(method = "loess", size = 1, span = .75) +
+  ylim(-.2, 1.2) + facet_wrap(~priorfrac)
+
+# height | raterisk - potential interaction ?  
+df %>% ggplot(aes(x = height, y = fracture.num, color = raterisk)) +
+  geom_point()+
+  geom_smooth(method = "loess", size = 1, span = .75) +
+  ylim(-.2, 1.2) + facet_wrap(~raterisk)
+
+
+# height | raterisk - potential interaction ?  
+df %>% ggplot(aes(x = bmi, y = fracture.num, color = bonemed)) +
+  geom_point()+
+  geom_smooth(method = "loess", size = 1, span = .75) +
+  ylim(-.2, 1.2) + facet_wrap(~bonemed)
+
+
+# height | raterisk - potential interaction ?  
+df %>% ggplot(aes(x = bmi, y = fracture.num, color = bonemed_fu)) +
+  geom_point()+
+  geom_smooth(method = "loess", size = 1, span = .75) +
+  ylim(-.2, 1.2) + facet_wrap(~bonemed_fu)
+
+# height | raterisk - potential interaction ?  
+df %>% ggplot(aes(x = bmi, y = fracture.num, color = bonetreat)) +
+  geom_point()+
+  geom_smooth(method = "loess", size = 1, span = .75) +
+  ylim(-.2, 1.2) + facet_wrap(~bonetreat)
+
+```
+
+```{r}
+complex1 <- glm(fracture ~ bonemed + bonetreat + bonemed_fu + bmi + bmi:bonemed + bmi:bonetreat + bmi:bonemed_fu,
+                data = training,
+                family = "binomial")
+vif(complex1)
+AIC(complex1)
+summary(complex1)
+cat("Simple:", simple.AIC,
+    "\nSimple1:",simple1.aic,
+    "\nComplex1:", AIC(complex1),
+    "\nSimple2:",simple2.aic)
+```
+
+
+
+```{r, message=F, warning=F, fig.align='center'}
+colnames(df)
+
+# parameters for train function
+fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, classProbs = T, summaryFunction = mnLogLoss)
+
+# set seed for reproduceability 
+set.seed(12)
+
+# training CARET mult. logi. regression model 
+complex <- train(fracture ~ fracscore*age + age + height +
+                   momfrac + smoke,
+                 data = training,
+                 trControl = fitControl,
+                 method = "glm",
+                 family = "binomial",
+                 metric = "logLoss")
+
 
 ```
