@@ -443,7 +443,7 @@ grid.arrange(lp,lp1,lp2,lp3,lp4,lp5,lp6,
 ```{r, message=F, warning=F, fig.align='center'}
 library(caret)
 set.seed(12)
-trainIndex <- createDataPartition(df$fracture, p= .8, list = F) # p = proportion of data in train
+trainIndex <- createDataPartition(df$fracture, p= .7, list = F) # p = proportion of data in train
 
 training <- df[trainIndex,]
 test <- df[-trainIndex,]
@@ -461,9 +461,65 @@ test <- df[-trainIndex,]
 Fit Logistic Regression Model:
 
   - Note that the coefficients are LOG-ODDS and not ratios.. to obtain ratios we must exp(coef)
+
+
+
+Base Additive Model:
+
+ANOVA:
+  
+  - In the presence of other variables, variables such as priorfrac, age, height,bmi, momfrac, bonemed, and bonetreat are significant, while weight, bonemed_fu, premeno, armassist, smoke, fracscore and bmi.cat are not significant at the .05 level of significance. 
+
+  - AIC of our base.model is 409.18
 ```{r, message=F, warning=F, fig.align='center'}
 library(ResourceSelection)
 library(car)
+
+# removing sub_id, site_id, phy_id, raterisk, bmi.cat, fracture.num
+adj.training <- training[,-c(1:3,13,19,20)]
+
+base.model <- glm(fracture~., family = "binomial", data = adj.training)
+
+summary(base.model)
+
+# anova 
+anova(base.model, test = "Chisq")
+
+```
+
+Base Adj. Model:
+
+  - taking what was significant in our base.model we will now add it to the base.adj model and compare it's performance. 
+  
+  - base.adj model removes 5 predictors and yields an AIC of 382.57 compared to base.model AIC 387.59
+
+  - with a p-value in our anova of .1659 > .05 suggests that the difference in deviance between the two models is not statistically significant. This means that we fail to reject the null hypothesis and cannot conclude that Model 1 fits the data significantly better than Model 2, even though it has more predictors. We will proceed with Model 2 (base.adj model)
+```{r, message=F, warning=F, fig.align='center'}
+base.adj <- glm(fracture~age+priorfrac+height+momfrac+bonemed+bmi+bonemed_fu, data = adj.training, family = "binomial")
+
+summary(base.adj)
+
+# anova comparing both models 
+anova(base.model,base.adj,test = "Chisq")
+
+```
+
+
+Base.adj Model Coefficients and CIs
+```{r, message=F, warning=F, fig.align='center'}
+# coefficient output for log. reg. model:
+(base.coef<- coef(base.adj)) # normal coefficient output
+(base.exp<- exp(coef(base.adj))) # exp coefficient
+
+# confidence intervals
+(base.ci<- exp(confint(base.adj, level = .95))) # confidence interval @ .05 significance
+
+```
+
+
+
+Simple Model - Multiple Logistic Regression fit
+```{r, message=F, warning=F, fig.align='center'}
 
 # fitting an additive multiple logistic regression model
 simple <- glm(fracture ~ smoke + armassist + momfrac + premeno + bmi + height + age + bonemed + bonetreat + bonemed_fu, data = training, family ="binomial")
@@ -477,27 +533,20 @@ simple <- glm(fracture ~ smoke + armassist + momfrac + premeno + bmi + height + 
 # AIC metric can help us compare against models with interactions later to determine if the interactions are important or not. 
 (simple.AIC <- AIC(simple))
 
-# Hosmer-Lemeshow test
-(simple.hlt <- hoslem.test(simple$y, fitted(simple)))
+# ANOVA
+anova(simple, test = "Chisq")
 ```
 
-Simple Model Coefficients and CIs
-```{r, message=F, warning=F, fig.align='center'}
-# coefficient output for log. reg. model:
-(simple.coef<- coef(simple)) # normal coefficient output
-(simple.exp<- exp(coef(simple))) # exp coefficient
 
-# confidence intervals
-(simple.ci<- exp(confint(simple, level = .95))) # confidence interval @ .05 significance
 
-```
+
 
 Reducing the model predictors:
   - Some reduction is due to insignificance.
   - Some predictors are kept however due to real world applicability. 
 
 ```{r, message=F, warning=F, fig.align='center'}
-red.model <- glm(fracture~ priorfrac+momfrac+age+bonetreat+bonemed_fu+bmi,
+red.model <- glm(fracture~ armassist+age+bonemed_fu+bonemed,
                  data = training,
                  family ="binomial")
 
@@ -513,18 +562,11 @@ summary(red.model)
 # Hosmer-Lemeshow test
 (red.hlt <- hoslem.test(red.model$y, fitted(red.model)))
 
-```
+# ANOVA Comparison 
+anova(simple, red.model, test = "Chisq") # FTR null : proceed with red.model
 
-
-Reduced Model Coefficients and CIs
-```{r, message=F, warning=F, fig.align='center'}
-# coefficient output for log. reg. model:
-(red.coef<- coef(red.model)) # normal coefficient output
-(red.exp<- exp(coef(red.model))) # exp coefficient
-
-# confidence intervals
-(red.ci<- exp(confint(red.model, level = .95))) # confidence interval @ .05 significance
-
+# ANOVA BASE.ADJ/RED
+anova(base.adj,red.model,test = "Chisq") # FTR Null: proceed with red.model
 ```
 
 
@@ -538,12 +580,10 @@ library(sjmisc)
 library(effects)
 
 # effect plot
-plot_model(red.model, type = "pred", terms = "priorfrac")
-plot_model(red.model, type = "pred", terms = "momfrac")
-plot_model(red.model, type = "pred", terms = "age")
-plot_model(red.model, type = "pred",terms = "bmi")
-plot_model(red.model, type = "pred", terms = "bonetreat")
-plot_model(red.model, type = "pred", terms = "bonemed_fu")
+plot_model(red.model, type = "pred", terms = "armassist")
+plot_model(red.model, type = "pred", terms= "bonemed_fu")
+plot_model(red.model, type = "pred", terms = "bonemed")
+plot_model(red.model, type = "pred",terms = "age")
 # identifies all of the high-order terms in a model and returns a list of "eff" or "effpoly" objects.
 all.effects <- allEffects(red.model)
 
@@ -559,13 +599,10 @@ Effect Plot Combo:
 ```{r, message=F, warning=F, fig.align='center'}
 
 # effect plot
-plot_model(red.model, type = "pred", terms = c("bonetreat","priorfrac"))
-plot_model(red.model, type = "pred", terms = c("age","bonetreat"))
+plot_model(red.model, type = "pred", terms = c("bonemed","armassist"))
 plot_model(red.model, type ="pred", terms = c("age","bonemed_fu"))
-plot_model(red.model, type = "pred", terms = c("age","priorfrac"))  
-plot_model(red.model, type = "pred", terms = c("bmi","bonetreat"))
-plot_model(red.model, type = "pred", terms = c("bmi","priorfrac"))
-plot_model(red.model, type = "pred", terms = c("momfrac","priorfrac")) 
+plot_model(red.model, type = "pred", terms = c("age","armassist"))
+plot_model(red.model, type = "pred", terms = c("armassist","bonemed_fu"))
 
 ```
 
@@ -573,25 +610,10 @@ plot_model(red.model, type = "pred", terms = c("momfrac","priorfrac"))
 # ROC Curve for Additive Model
 <hr>
 
-<h4>Multiple Logistic Regression: "Simple" Model</h4>
+<h4>Caret CV. base.adj Model & ROC</h4>
 ```{r, message=F, warning=F, fig.align='center'}
 library(pROC)
 
-# predicting probabilities on the testing data
-simple.predprobs <- predict(simple,test, type = 'response')
-#simple.predprobs
-
-simple.roc <- roc(response = test$fracture,
-                  predictor = simple.predprobs,
-                  levels = c("No","Yes"))
-
-
-plot(simple.roc, print.thres= "best", col = "red")
-```
-
-
-<h4>Caret CV. Model ROC</h4>
-```{r, message=F, warning=F, fig.align='center'}
 # parameters for train function
 fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, classProbs = T, summaryFunction = mnLogLoss)
 
@@ -599,21 +621,23 @@ fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, clas
 set.seed(12)
 
 # training CARET mult. logi. regression model 
-add.model <- train(fracture~ priorfrac+momfrac+age+bonetreat+bonemed_fu+bmi,
+base.adjust.cv <- train(fracture~age+priorfrac+height+momfrac+bonemed+bmi+bonemed_fu,
                  data = training,
                  trControl = fitControl,
                  method = "glm",
                  family = "binomial",
                  metric = "logLoss")
 
-summary(add.model)
-
+summary(base.adjust.cv)
+base.aic <- AIC(base.adj) # 384.7314
 # make preds on the probabilty of each class in TRANING data
-add.model.predprob <- predict(add.model,test, type = "prob")
+add.model.predprob <- predict(base.adjust.cv,test, type = "prob")
 
 # compute the ROC curve
 add.model.roc <- roc(response = test$fracture, predictor = add.model.predprob$Yes, levels = c("Yes","No"))
 
+# optimal threshold
+optimal.threshold <- coords(add.model.roc, "best")
 
 # plot ROC curve
 plot(add.model.roc, print.thres = "best", print.thres.best.method = "closest.topleft", col = "red")
@@ -623,11 +647,73 @@ legend("bottomright",
        col = "red",
        lwd = 4, cex = 1, xpd = T, horiz = F)
 
+text(x = optimal.threshold[1], y = optimal.threshold[2], 
+     labels = paste("Optimal Threshold =", round(optimal.threshold[1], 2)), 
+     pos = 3)
+
 # get coord (threshold)
 coords <- coords(add.model.roc, "best", best.method = "closest.topleft", ret = "threshold")
 
 # get optimal threshold
-threshold <- coords[[1]] # currently this is 0.2472446
+threshold <- coords[[1]] # currently this is 0.3003923
+
+# make changes to threshold if desired
+adj.threshold <- threshold + 0
+
+# adjust the labeling by the desired threshold
+pred_label <- as.factor(ifelse(add.model.predprob$Yes >= adj.threshold, "Yes","No"))
+
+# print confusion matrix
+confusionMatrix(pred_label, test$fracture)
+
+
+```
+
+
+
+<h4>Caret CV. Red.model & ROC</h4>
+```{r, message=F, warning=F, fig.align='center'}
+# parameters for train function
+fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, classProbs = T, summaryFunction = mnLogLoss)
+
+# set seed for reproduceability 
+set.seed(12)
+
+# training CARET mult. logi. regression model 
+add.model <- train(fracture~ armassist+age+bonemed_fu+bonemed,
+                 data = training,
+                 trControl = fitControl,
+                 method = "glm",
+                 family = "binomial",
+                 metric = "logLoss")
+
+summary(add.model)
+red.aic <- AIC(red.model) # 385.2419
+# make preds on the probabilty of each class in TRANING data
+add.model.predprob <- predict(add.model,test, type = "prob")
+
+# compute the ROC curve
+add.model.roc <- roc(response = test$fracture, predictor = add.model.predprob$Yes, levels = c("Yes","No"))
+
+# optimal threshold
+optimal.threshold <- coords(add.model.roc, "best")
+
+# plot ROC curve
+plot(add.model.roc, print.thres = "best", print.thres.best.method = "closest.topleft", col = "red")
+# add legend to plot
+legend("bottomright",
+       legend = 'caret model',
+       col = "red",
+       lwd = 4, cex = 1, xpd = T, horiz = F)
+text(x = optimal.threshold[1], y = optimal.threshold[2], 
+     labels = paste("Optimal Threshold =", round(optimal.threshold[1], 2)), 
+     pos = 1)
+
+# get coord (threshold)
+coords <- coords(add.model.roc, "best", best.method = "closest.topleft", ret = "threshold")
+
+# get optimal threshold
+threshold <- coords[[1]] # currently this is 0.2358135
 
 # make changes to threshold if desired
 adj.threshold <- threshold + 0
@@ -639,6 +725,9 @@ pred_label <- as.factor(ifelse(add.model.predprob$Yes >= adj.threshold, "Yes","N
 confusionMatrix(pred_label, test$fracture)
 
 ```
+
+
+
 
 <hr>
 # Objective 2
@@ -707,23 +796,22 @@ df %>% ggplot(aes(x = bmi, y = fracture.num, color = bonetreat)) +
 ```
 
 ```{r, message=F, warning=F, fig.align='center'}
-complex1 <- glm(fracture ~ bonemed + bonetreat + bonemed_fu + bmi + bmi:bonemed + bmi:bonetreat + bmi:bonemed_fu,
+complex <- glm(fracture~age+priorfrac+height+momfrac+bonemed+bmi+bonemed_fu+height:bonemed_fu+bonemed:bmi,
                 data = training,
                 family = "binomial")
-vif(complex1)
-AIC(complex1)
-summary(complex1)
+
+complex.aic <- AIC(complex)
+summary(complex)
 
 # printing out all AIC metrics (note they are based on training data not test data)
-cat("Simple:", simple.AIC,
-    "\nComplex1:", AIC(complex1),
-    "\nRed Model:", red.aic)
+cat("\nbase.adj Model (Additive):", base.aic,
+    "\nRed Model (Additive):", red.aic,
+    "\nComplex Model:", complex.aic)
 ```
 
 
 
 ```{r, message=F, warning=F, fig.align='center'}
-colnames(df)
 
 # parameters for train function
 fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, classProbs = T, summaryFunction = mnLogLoss)
@@ -732,14 +820,283 @@ fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, clas
 set.seed(12)
 
 # training CARET mult. logi. regression model 
-complex2 <- train(fracture~ priorfrac+momfrac+age+bonetreat+bonemed_fu+bmi +bonemed_fu:age +
-                    momfrac:priorfrac,
+complex.cv <- train(fracture~age+priorfrac+height+momfrac+bonemed+bmi+bonemed_fu+height:bonemed_fu+bonemed:bmi,
                  data = training,
                  trControl = fitControl,
                  method = "glm",
                  family = "binomial",
                  metric = "logLoss")
 
-summary(complex2)
+summary(complex.cv)
+
+# make preds on the probabilty of each class in TRANING data
+complexcv.predprob <- predict(complex.cv, test, type = "prob")
+
+# compute the ROC curve
+complexcv.roc <- roc(response = test$fracture, predictor = complexcv.predprob$Yes, levels = c("Yes","No"))
+
+# plot ROC curve
+plot(complexcv.roc, print.thres = "best", print.thres.best.method = "closest.topleft", col = "red")
+# add legend to plot
+legend("bottomright",
+       legend = 'caret model',
+       col = "red",
+       lwd = 4, cex = 1, xpd = T, horiz = F)
+
+# printing out all AIC metrics (note they are based on training data not test data)
+cat("\nbase.adj Model (Additive):", base.aic,
+    "\nRed Model (Additive):", red.aic,
+    "\nComplex Model:", complex.aic)
+
+# get coord (threshold)
+coords <- coords(complexcv.roc, "best", best.method = "closest.topleft", ret = "threshold")
+
+# get optimal threshold
+threshold <- coords[[1]] # currently this is 0.25653
+
+# make changes to threshold if desired
+adj.threshold <- threshold + 0
+
+# adjust the labeling by the desired threshold
+pred_label <- as.factor(ifelse(complexcv.predprob$Yes >= adj.threshold, "Yes","No"))
+
+# print confusion matrix
+cm <-confusionMatrix(pred_label, test$fracture)
+
+cat("\nSensitivity:", cm$byClass[1],
+    "\nSpecificity:", cm$byClass[2],
+    "\nPrevalence:", cm$byClass[3],
+    "\nPositive Predicitve Value:", cm$byClass[4],
+    "\nNegative Predicive Value:",cm$byClass[5],
+    "\nAUROC:", complexcv.roc$auc)
+
+
+
+```
+
+# GLM-NET Model 
+
+  - No predictors are removed?
+```{r}
+colnames(training)
+glm.df <- training[,-c(1:3,8,20)]
+set.seed(12)
+
+fitControl<- trainControl(method = "repeatedcv", number = 5, repeats = 1)
+
+glm.fit <- train(fracture~.,
+                 data = glm.df,
+                 method = "glmnet",
+                 trControl = fitControl)
+
+glm.fit
+
+plot(glm.fit)
+
+opt.pen<- glm.fit$finalModel$lambdaOpt
+
+coef(glm.fit$finalModel, opt.pen)
+
+```
+
+GLM-NET Feat. Selected Model:
+
+```{r}
+
+# parameters for train function
+fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, classProbs = T, summaryFunction = mnLogLoss)
+
+# set seed for reproduceability 
+set.seed(12)
+
+
+# training CARET mult. logi. regression model 
+red.glm <- train(fracture~priorfrac+momfrac+raterisk+fracscore+bonemed_fu+bmi.cat,
+                 data = training,
+                 trControl = fitControl,
+                 method = "glm",
+                 family = "binomial",
+                 metric = "logLoss")
+
+summary(red.glm)
+
+# make preds on the probabilty of each class in TRANING data
+complexcv.predprob <- predict(red.glm, test, type = "prob")
+
+# compute the ROC curve
+complexcv.roc <- roc(response = test$fracture, predictor = complexcv.predprob$Yes, levels = c("Yes","No"))
+
+# plot ROC curve
+plot(complexcv.roc, print.thres = "best", print.thres.best.method = "closest.topleft", col = "red")
+# add legend to plot
+legend("bottomright",
+       legend = 'caret model',
+       col = "red",
+       lwd = 4, cex = 1, xpd = T, horiz = F)
+
+red.glm <- glm(fracture~priorfrac+momfrac+raterisk+fracscore+bonemed_fu+bmi.cat,
+                 data = training,family = "binomial")
+red.glm.aic<-AIC(red.glm)
+# printing out all AIC metrics (note they are based on training data not test data)
+cat("\nbase.adj Model (Additive):", base.aic,
+    "\nRed Model (Additive):", red.aic,
+    "\nComplex Model:", complex.aic,
+    "\nRed.GLM Model(additive):", red.glm.aic)
+
+# get coord (threshold)
+coords <- coords(complexcv.roc, "best", best.method = "closest.topleft", ret = "threshold")
+
+# get optimal threshold
+threshold <- coords[[1]] # currently this is 0.25653
+
+# make changes to threshold if desired
+adj.threshold <- threshold + 0
+
+# adjust the labeling by the desired threshold
+pred_label <- as.factor(ifelse(complexcv.predprob$Yes >= adj.threshold, "Yes","No"))
+
+# print confusion matrix
+confusionMatrix(pred_label, test$fracture)
+
+cat("\nSensitivity:", cm$byClass[1],
+    "\nSpecificity:", cm$byClass[2],
+    "\nPrevalence:", cm$byClass[3],
+    "\nPositive Predicitve Value:", cm$byClass[4],
+    "\nNegative Predicive Value:",cm$byClass[5],
+    "\nAUROC:", complexcv.roc$auc)
+
+
+```
+
+Complex GLM model 
+```{r}
+# parameters for train function
+fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, classProbs = T, summaryFunction = mnLogLoss)
+
+# set seed for reproduceability 
+set.seed(12)
+
+
+# training CARET mult. logi. regression model 
+complex.glm <- train(fracture ~ priorfrac + momfrac + raterisk + fracscore + bonemed_fu + bmi.cat +
+                       bonemed_fu:bmi.cat,
+                     data = training,
+                     trControl = fitControl,
+                     method = "glm",
+                     family = "binomial",
+                     metric = "logLoss")
+
+summary(complex.glm)
+
+
+# make preds on the probabilty of each class in TRANING data
+complexcv.predprob <- predict(complex.glm, test, type = "prob")
+
+# compute the ROC curve
+complexcv.roc <- roc(response = test$fracture, predictor = complexcv.predprob$Yes, levels = c("Yes","No"))
+
+# plot ROC curve
+plot(complexcv.roc, print.thres = "best", print.thres.best.method = "closest.topleft", col = "red")
+# add legend to plot
+legend("bottomright",
+       legend = 'caret model',
+       col = "red",
+       lwd = 4, cex = 1, xpd = T, horiz = F)
+
+complex.glm <- glm(fracture ~ priorfrac + momfrac + raterisk + fracscore + bonemed_fu + bmi.cat +
+                       bonemed_fu:bmi.cat,
+                 data = training,family = "binomial")
+complex.glm.aic<-AIC(complex.glm)
+# printing out all AIC metrics (note they are based on training data not test data)
+cat("\nbase.adj Model (Additive):", base.aic,
+    "\nRed Model (Additive):", red.aic,
+    "\nComplex Model:", complex.aic,
+    "\nRed.GLM Model(additive):", red.glm.aic,
+    "\nComplex.GLM:",complex.glm.aic)
+
+# get coord (threshold)
+coords <- coords(complexcv.roc, "best", best.method = "closest.topleft", ret = "threshold")
+
+# get optimal threshold
+threshold <- coords[[1]] # currently this is 0.25653
+
+# make changes to threshold if desired
+adj.threshold <- threshold + 0
+
+# adjust the labeling by the desired threshold
+pred_label <- as.factor(ifelse(complexcv.predprob$Yes >= adj.threshold, "Yes","No"))
+
+# print confusion matrix
+cm <- confusionMatrix(pred_label, test$fracture)
+
+
+cat("\nSensitivity:", cm$byClass[1],
+    "\nSpecificity:", cm$byClass[2],
+    "\nPrevalence:", cm$byClass[3],
+    "\nPositive Predicitve Value:", cm$byClass[4],
+    "\nNegative Predicive Value:",cm$byClass[5],
+    "\nAUROC:", complexcv.roc$auc)
+
+```
+
+
+
+# LASSO Model
+
+  - All predictors are removed?
+```{r}
+
+set.seed(12)
+
+fitControl<- trainControl(method = "repeatedcv", number = 5, repeats = 1)
+
+lambda_values <- seq(0,.1,by = .01)
+
+lasso.fit <- train(fracture~.,
+                 data = glm.df,
+                 method = "glmnet",
+                 trControl = fitControl,
+                 tuneGrid = expand.grid(data.frame(alpha = 1, lambda = lambda_values)))
+
+lasso.fit
+
+plot(lasso.fit)
+
+opt.pen<- lasso.fit$finalModel$lambdaOpt
+
+coef(lasso.fit$finalModel, opt.pen)
+
+```
+
+
+KNN - Non-parametric test
+```{r}
+
+fitControl <- trainControl(method = "cv",number = 5)
+
+set.seed(12)
+
+knn.model <- train(fracture~.,
+                   data = training,
+                   trControl = fitControl,
+                   tuneLength = 20)
+
+preds <- predict(knn.model, test, type ="prob")[,"Yes"]
+
+knn.roc <- roc(response = test$fracture, predictor = preds, levels = c("Yes","No"))
+
+plot(knn.roc,print.thres = "best", print.thres.best.method = "closest.topleft", col = "red")
+
+threshold = .5
+knn.preds <- factor(ifelse(preds > threshold, "Yes","No"))
+
+cm <- confusionMatrix(data = knn.preds, reference = as.factor(test$fracture))
+
+cat("\nSensitivity:", cm$byClass[1],
+    "\nSpecificity:", cm$byClass[2],
+    "\nPrevalence:", cm$byClass[3],
+    "\nPositive Predicitve Value:", cm$byClass[4],
+    "\nNegative Predicive Value:",cm$byClass[5],
+    "\nAUROC:",knn.roc$auc)
 
 ```
