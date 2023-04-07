@@ -693,7 +693,7 @@ adj.threshold <- threshold + 0
 pred_label <- as.factor(ifelse(add.model.predprob$Yes >= adj.threshold, "Yes","No"))
 
 # print confusion matrix
-confusionMatrix(pred_label, test$fracture)
+confusionMatrix(pred_label, test$fracture, positive = "Yes")
 
 
 ```
@@ -753,7 +753,7 @@ adj.threshold <- threshold + 0
 pred_label <- as.factor(ifelse(add.model.predprob$Yes >= adj.threshold, "Yes","No"))
 
 # print confusion matrix
-confusionMatrix(pred_label, test$fracture)
+confusionMatrix(pred_label, test$fracture, positive = "Yes")
 
 ```
 
@@ -810,6 +810,11 @@ df %>% ggplot(aes(x = bmi, y = fracture.num, color = bonemed)) +
   geom_point()+
   geom_smooth(method = "loess", size = 1, span = .75) +
   ylim(-.2, 1.2) + facet_wrap(~bonemed)
+
+
+df %>% ggplot(aes(x = age, y = fracture.num, color = as.factor(fracscore))) + 
+  geom_smooth(method = "loess", size = 1, span= .75) + 
+  ylim(-.2,1.2) + facet_wrap(~as.factor(fracscore))
 
 ```
 
@@ -890,7 +895,7 @@ adj.threshold <- threshold + 0
 pred_label <- as.factor(ifelse(complexcv.predprob$Yes >= adj.threshold, "Yes","No"))
 
 # print confusion matrix
-cm <-confusionMatrix(pred_label, test$fracture)
+(cm <-confusionMatrix(pred_label, test$fracture, positive = "Yes"))
 
 cat("\nSensitivity:", cm$byClass[1],
     "\nSpecificity:", cm$byClass[2],
@@ -988,7 +993,7 @@ adj.threshold <- threshold + 0
 pred_label <- as.factor(ifelse(glm.predprob$Yes >= adj.threshold, "Yes","No"))
 
 # print confusion matrix
-cm <- confusionMatrix(pred_label, test$fracture)
+(cm <- confusionMatrix(pred_label, test$fracture, positive = "Yes"))
 
 cat("\nSensitivity:", cm$byClass[1],
     "\nSpecificity:", cm$byClass[2],
@@ -1063,7 +1068,7 @@ adj.threshold <- threshold + 0
 pred_label <- as.factor(ifelse(complexcv.predprob$Yes >= adj.threshold, "Yes","No"))
 
 # print confusion matrix
-cm <- confusionMatrix(pred_label, test$fracture)
+(cm <- confusionMatrix(pred_label, test$fracture, positive = "Yes"))
 
 
 cat("\nSensitivity:", cm$byClass[1],
@@ -1109,7 +1114,7 @@ legend("bottomright",
 threshold = .5
 knn.preds <- factor(ifelse(preds > threshold, "Yes","No"))
 
-cm <- confusionMatrix(data = knn.preds, reference = as.factor(test$fracture))
+(cm <- confusionMatrix(data = knn.preds, reference = as.factor(test$fracture), positive = "Yes"))
 
 cat("\nSensitivity:", cm$byClass[1],
     "\nSpecificity:", cm$byClass[2],
@@ -1145,5 +1150,99 @@ plot(lasso.fit)
 opt.pen<- lasso.fit$finalModel$lambdaOpt
 
 coef(lasso.fit$finalModel, opt.pen)
+
+```
+# Extra EDA
+
+<h4>Correlation Plot</h4>
+```{r, message=F, warning=F, fig.align='center'}
+library(ggcorrplot)
+library(GGally)
+num.df <- df
+
+# ordinal categorical into numerical
+rr.mapping <- c(Less = -1,Same = 0,Greater=1)
+num.df$raterisk.num <- as.numeric(rr.mapping[num.df$raterisk])
+
+
+# create a dataframe that is only numerical
+num.df <- num.df %>% select(where(is.numeric))
+
+ggpairs(num.df)
+
+# remove irrelevant columns
+num.df.adj <- num.df[,-c(1,2,3,9)]
+
+# create correlation plot
+
+# calling cor function to put into var. 
+cor.data <- cor(num.df.adj)
+
+# generate the plot
+ggcorrplot(cor.data, outline.color = "black", lab = TRUE, title = 'Fracture Correlation Plot')
+
+```
+
+# LDA/QDA Assumption Checking 
+
+  - The assumptions don't look adequate for LDA/QDA model?
+  - Non-parametric (KNN) would be more adequate? 
+
+```{r}
+
+colnames(num.df)
+
+num.df %>% ggplot(aes(x =age,y = weight, color = as.factor(fracture.num))) + 
+  geom_point()+geom_density_2d()
+
+num.df %>% ggplot(aes(x = age, y = height, color = as.factor(fracture.num)))+
+  geom_point() + geom_density_2d()
+
+num.df %>% ggplot(aes(x = age, y = bmi, color = as.factor(fracture.num)))+
+  geom_point() + geom_density_2d()
+
+num.df %>% ggplot(aes(x = age, y = fracscore, color = as.factor(fracture.num)))+
+  geom_point() + geom_density_2d()
+
+num.df %>% ggplot(aes(x = weight, y = height, color = as.factor(fracture.num)))+
+  geom_point() + geom_density_2d()
+
+num.df %>% ggplot(aes(x = bmi, y = height, color = as.factor(fracture.num)))+
+  geom_point() + geom_density_2d()
+
+num.df %>% ggplot(aes(x = fracscore, y = height, color = as.factor(fracture.num)))+
+  geom_point() + geom_density_2d()
+
+num.df %>% ggplot(aes(x = bmi, y = weight, color = as.factor(fracture.num)))+
+  geom_point() + geom_density_2d()
+
+num.df %>% ggplot(aes(x = bmi, y = fracscore, color = as.factor(fracture.num)))+
+  geom_point() + geom_density_2d()
+
+
+
+```
+
+```{r}
+
+fitControl <- trainControl(method="repeatedcv",
+                           number=5,
+                           repeats=1,
+                           classProbs=TRUE,
+                           summaryFunction=mnLogLoss)
+set.seed(12)
+qda.fit <- train(fracture~age+weight+height+bmi+fracscore,
+                 data = training,
+                 method = "qda",
+                 trControl = fitControl,
+                 metric = "logLoss")
+
+predictions <- predict(qda.fit, test, type = "prob")[,"Yes"]
+
+threshold = .25
+class_pred = as.factor(ifelse(predictions > threshold, "Yes","No"))
+
+confusionMatrix(data = class_pred, reference = test$fracture, positive = "Yes")
+
 
 ```
