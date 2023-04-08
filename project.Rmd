@@ -483,7 +483,7 @@ adj.training <- training[,-c(1:3,13,19,20)]
 
 base.model <- glm(fracture~., family = "binomial", data = adj.training)
 
-#summary(base.model)
+summary(base.model)
 
 # anova 
 anova(base.model, test = "Chisq")
@@ -497,11 +497,12 @@ anova(base.model, test = "Chisq")
   - base.adj model removes 6 predictors that were in the base.model and yields a slightly improved AIC of 384.73 compared to base.model AIC 387.59.
 
   - The p-value from our anova of .1659 > .05 suggests that the difference in deviance between the two models is not statistically significant. This means that we fail to reject the null hypothesis and cannot conclude that Model 1 fits the data significantly better than Model 2, even though it has more predictors. We will proceed with Model 2 (base.adj model)
-  
+
 ```{r, message=F, warning=F, fig.align='center'}
+
 base.adj <- glm(fracture~age+priorfrac+height+momfrac+bonemed+bmi+bonemed_fu, data = adj.training, family = "binomial")
 
-#summary(base.adj)
+summary(base.adj)
 
 # anova comparing both models 
 anova(base.model,base.adj,test = "Chisq")
@@ -594,7 +595,49 @@ anova(base.adj,red.model,test = "Chisq") # FTR Null: proceed with red.model
 
 <h4>Base.Adj Model</h4>
 
+  - Log-odds: 
+    
+    - AGE: The positive coefficient of 0.0342221 indicates that for every one-unit increase in age, the log odds of having a fracture increase by 0.0342221, holding all other predictors constant. This predictor is statistically significant (p = 0.0267), meaning that age has a significant effect on the probability of fracture
+    
+    - PRIORFRAC(YES) The positive coefficient of 0.6183073 indicates that if a person has had a prior fracture (priorfrac = Yes), the log odds of having a fracture increase by 0.6183073, holding all other predictors constant. This predictor is also statistically significant (p = 0.0322), indicating that having a prior fracture increases the risk of having another fracture.
+    
+    - HEIGHT The coefficient of -0.0008537 suggests a very small negative relationship between height and the log odds of having a fracture, holding all other predictors constant. However, this predictor is not statistically significant (p = 0.9679), so we cannot conclude that height has an impact on the probability of a fracture.
+    
+    - MOMFRAC(YES)  The positive coefficient of 0.5171833 indicates that if a person's mother has had a fracture (momfrac = Yes), the log odds of having a fracture increase by 0.5171833, holding all other predictors constant. However, this predictor is not statistically significant (p = 0.1449), so we cannot conclude that having a mother with a fracture affects the probability of a fracture.
+    
+    - BONEMED(YES) The positive coefficient of 0.0169533 suggests a very small positive relationship between taking bone medication (bonemed = Yes) and the log odds of having a fracture, holding all other predictors constant. However, this predictor is not statistically significant (p = 0.9736), so we cannot conclude that taking bone medication has an impact on the probability of a fracture.
+    
+    - BMI The positive coefficient of 0.0332507 indicates that for every one-unit increase in BMI, the log odds of having a fracture increase by 0.0332507, holding all other predictors constant. However, this predictor is not statistically significant (p = 0.1372), so we cannot conclude that BMI has an impact on the probability of a fracture.
+    
+    - BONEMED_FU(YES)  The positive coefficient of 0.6969686 indicates that if a person has follow-up bone medication (bonemed_fu = Yes), the log odds of having a fracture increase by 0.6969686, holding all other predictors constant. However, this predictor is not statistically significant (p = 0.1646), so we cannot conclude that follow-up bone medication has an impact on the probability of a fracture.
+
+
+  - Odds Ratios:
+    
+    - AGE  The odds ratio for age is 1.0348 with a 95% confidence interval of [1.0040, 1.0669]. This means that for every one-unit increase in age, the odds of having a fracture increase by about 3.48%, holding all other predictors constant. The confidence interval suggests that the true odds ratio for age lies between 1.0040 and 1.0669 with 95% confidence.
+    
+    - PRIORFRAC(YES)  The odds ratio for priorfracYes is 1.8555 with a 95% confidence interval of [1.0484, 3.2589]. This means that if a person has had a prior fracture (priorfrac = Yes), the odds of having a fracture are about 1.8555 times higher than someone who hasn't had a prior fracture, holding all other predictors constant. The confidence interval suggests that the true odds ratio for priorfracYes lies between 1.0484 and 3.2589 with 95% confidence.
+    
+    - HEIGHT The odds ratio for height is 0.9991 with a 95% confidence interval of [0.9582, 1.0417]. This means that for every one-unit increase in height, the odds of having a fracture decrease by about 0.09%, holding all other predictors constant. However, as previously mentioned, the effect of height is not statistically significant. The confidence interval for the height odds ratio includes 1, which further supports the lack of a significant effect.
+    
+    - MOMFRAC(YES) The odds ratio for momfracYes is 1.6778 with a 95% confidence interval of [0.8218, 3.3282]. This means that if a person's mother has had a fracture (momfrac = Yes), the odds of having a fracture are about 1.6778 times higher than someone whose mother hasn't had a fracture, holding all other predictors constant. However, the effect of momfracYes is not statistically significant, as the confidence interval includes 1.
+    
+    - BONEMED(YES) The odds ratio for bonemedYes is 1.0171 with a 95% confidence interval of [0.36596, 2.7755]. This means that if a person is taking bone medication (bonemed = Yes), the odds of having a fracture are about 1.0171 times higher than someone who is not taking bone medication, holding all other predictors constant. However, the effect of bonemedYes is not statistically significant, as the confidence interval includes 1.
+    
+    - BMI The odds ratio for BMI is 1.0338 with a 95% confidence interval of [0.9891, 1.0801]. This means that for every one-unit increase in BMI, the odds of having a fracture increase by about 3.38%, holding all other predictors constant. However, the effect of BMI is not statistically significant, as the confidence interval includes 1.
+    
+    - BONEMED_FU(YES)  The odds ratio for bonemed_fuYes is 2.0075 with a 95% confidence interval of [0.7423, 5.4109]. This means that if a person has follow-up bone medication (bonemed_fu = Yes), the odds of having a fracture are about 2.0075 times higher than someone who does not have follow-up bone medication, holding all other predictors constant. However, the effect of bonemed_fuYes is not statistically significant, as the confidence interval includes 1.
+
+
 <h4>Practical/Statistical Significance of Important Factors</h4>
+  
+  - Age and PriorFrac were found to be statistically significant at the alpha = .05 level of significance. This indicates that there is sufficient evidence to suggest that these predictors have a non-zero effect on the odds of having a fracture, and their relationship with the response variable is unlikely to be due to random chance. 
+
+  - Practical Significance:
+    
+    - AGE: The odds of having a fracture increase by about 3.48%, holding all other predictors constant, for every one year increase in age. This suggests that on a practical level age is an important risk factor for fractures, and interventions aimed at reducing fracture risk should consider age as a key factor.
+    
+    - Prior Fracture: If a person had a prior fracture the odds of having a fracture are about 1.86 times higher, when holding all other predictors constant. From a practical standpoint this indicates that individuals with a history of fractures are at a significantly higher risk of experiencing another fracture. it's important to identify and monitor such individuals to develop targeted interventions that can help mitigate this risk. 
 
 # Effect Plots 
 one at a time (Additive Reduced Model):
@@ -669,7 +712,9 @@ add.model.roc <- roc(response = test$fracture, predictor = add.model.predprob$Ye
 optimal.threshold <- coords(add.model.roc, "best")
 
 # plot ROC curve
-plot(add.model.roc, print.thres = "best", print.thres.best.method = "closest.topleft", col = "red")
+plot(add.model.roc, print.thres = "best",
+     #print.thres.best.method = "closest.topleft",
+     col = "red")
 # add legend to plot
 legend("bottomright",
        legend = 'caret model',
@@ -681,20 +726,21 @@ text(x = optimal.threshold[1], y = optimal.threshold[2],
      pos = 3)
 
 # get coord (threshold)
-coords <- coords(add.model.roc, "best", best.method = "closest.topleft", ret = "threshold")
+coords <- coords(add.model.roc, "best",
+                 #best.method = "closest.topleft",
+                 ret = "threshold")
 
 # get optimal threshold
 threshold <- coords[[1]] # currently this is 0.3003923
 
 # make changes to threshold if desired
-adj.threshold <- threshold + 0
+adj.threshold <- threshold +0
 
 # adjust the labeling by the desired threshold
-pred_label <- as.factor(ifelse(add.model.predprob$Yes >= adj.threshold, "Yes","No"))
+pred_label <- as.factor(ifelse(add.model.predprob$Yes > adj.threshold, "Yes","No"))
 
 # print confusion matrix
-confusionMatrix(pred_label, test$fracture, positive = "Yes")
-
+(cm1 <- confusionMatrix(pred_label, test$fracture, positive = "Yes"))
 
 ```
 
@@ -750,10 +796,10 @@ threshold <- coords[[1]] # currently this is 0.2358135
 adj.threshold <- threshold + 0
 
 # adjust the labeling by the desired threshold
-pred_label <- as.factor(ifelse(add.model.predprob$Yes >= adj.threshold, "Yes","No"))
+pred_label <- as.factor(ifelse(add.model.predprob$Yes > adj.threshold, "Yes","No"))
 
 # print confusion matrix
-confusionMatrix(pred_label, test$fracture, positive = "Yes")
+(cm2 <- confusionMatrix(pred_label, test$fracture, positive = "Yes"))
 
 ```
 
@@ -895,13 +941,13 @@ adj.threshold <- threshold + 0
 pred_label <- as.factor(ifelse(complexcv.predprob$Yes >= adj.threshold, "Yes","No"))
 
 # print confusion matrix
-(cm <-confusionMatrix(pred_label, test$fracture, positive = "Yes"))
+(cm3 <-confusionMatrix(pred_label, test$fracture, positive = "Yes"))
 
-cat("\nSensitivity:", cm$byClass[1],
-    "\nSpecificity:", cm$byClass[2],
-    "\nPrevalence:", cm$byClass[3],
-    "\nPositive Predicitve Value:", cm$byClass[4],
-    "\nNegative Predicive Value:",cm$byClass[5],
+cat("\nSensitivity:", cm1$byClass[1],
+    "\nSpecificity:", cm1$byClass[2],
+    "\nPrevalence:", cm1$byClass[3],
+    "\nPositive Predicitve Value:", cm1$byClass[4],
+    "\nNegative Predicive Value:",cm1$byClass[5],
     "\nAUROC:", complexcv.roc$auc)
 
 
@@ -993,13 +1039,13 @@ adj.threshold <- threshold + 0
 pred_label <- as.factor(ifelse(glm.predprob$Yes >= adj.threshold, "Yes","No"))
 
 # print confusion matrix
-(cm <- confusionMatrix(pred_label, test$fracture, positive = "Yes"))
+(cm4 <- confusionMatrix(pred_label, test$fracture, positive = "Yes"))
 
-cat("\nSensitivity:", cm$byClass[1],
-    "\nSpecificity:", cm$byClass[2],
-    "\nPrevalence:", cm$byClass[3],
-    "\nPositive Predicitve Value:", cm$byClass[4],
-    "\nNegative Predicive Value:",cm$byClass[5],
+cat("\nSensitivity:", cm1$byClass[1],
+    "\nSpecificity:", cm1$byClass[2],
+    "\nPrevalence:", cm1$byClass[3],
+    "\nPositive Predicitve Value:", cm1$byClass[4],
+    "\nNegative Predicive Value:",cm1$byClass[5],
     "\nAUROC:", glm.roc$auc)
 
 
@@ -1068,14 +1114,14 @@ adj.threshold <- threshold + 0
 pred_label <- as.factor(ifelse(complexcv.predprob$Yes >= adj.threshold, "Yes","No"))
 
 # print confusion matrix
-(cm <- confusionMatrix(pred_label, test$fracture, positive = "Yes"))
+(cm5 <- confusionMatrix(pred_label, test$fracture, positive = "Yes"))
 
 
-cat("\nSensitivity:", cm$byClass[1],
-    "\nSpecificity:", cm$byClass[2],
-    "\nPrevalence:", cm$byClass[3],
-    "\nPositive Predicitve Value:", cm$byClass[4],
-    "\nNegative Predicive Value:",cm$byClass[5],
+cat("\nSensitivity:", cm1$byClass[1],
+    "\nSpecificity:", cm1$byClass[2],
+    "\nPrevalence:", cm1$byClass[3],
+    "\nPositive Predicitve Value:", cm1$byClass[4],
+    "\nNegative Predicive Value:",cm1$byClass[5],
     "\nAUROC:", complex.glm.roc$auc)
 
 ```
@@ -1114,13 +1160,13 @@ legend("bottomright",
 threshold = .5
 knn.preds <- factor(ifelse(preds > threshold, "Yes","No"))
 
-(cm <- confusionMatrix(data = knn.preds, reference = as.factor(test$fracture), positive = "Yes"))
+(cm6 <- confusionMatrix(data = knn.preds, reference = as.factor(test$fracture), positive = "Yes"))
 
-cat("\nSensitivity:", cm$byClass[1],
-    "\nSpecificity:", cm$byClass[2],
-    "\nPrevalence:", cm$byClass[3],
-    "\nPositive Predicitve Value:", cm$byClass[4],
-    "\nNegative Predicive Value:",cm$byClass[5],
+cat("\nSensitivity:", cm1$byClass[1],
+    "\nSpecificity:", cm1$byClass[2],
+    "\nPrevalence:", cm1$byClass[3],
+    "\nPositive Predicitve Value:", cm1$byClass[4],
+    "\nNegative Predicive Value:",cm1$byClass[5],
     "\nAUROC:",knn.roc$auc)
 
 ```
@@ -1239,10 +1285,24 @@ qda.fit <- train(fracture~age+weight+height+bmi+fracscore,
 
 predictions <- predict(qda.fit, test, type = "prob")[,"Yes"]
 
-threshold = .25
+threshold = .258
 class_pred = as.factor(ifelse(predictions > threshold, "Yes","No"))
 
-confusionMatrix(data = class_pred, reference = test$fracture, positive = "Yes")
+(cm7<-confusionMatrix(data = class_pred, reference = test$fracture, positive = "Yes"))
+
+qda.roc <- roc(response = test$fracture, predictor = predictions, levels = c("Yes","No"))
+
+plot(qda.roc, print.thres = "best", col = "lightblue")
+```
+
+```{r}
+cm1$byClass[3]
+cm2$byClass[3]
+cm3$byClass[3]
+cm4$byClass[3]
+cm5$byClass[3]
+cm6$byClass[3]
+cm7$byClass[3]
 
 
 ```
