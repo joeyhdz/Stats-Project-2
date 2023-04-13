@@ -3,7 +3,6 @@ title: "STAT Project #2"
 author: 'Joey Hernandez | Krithika Kondakindi | Santiago Gutiérrez<br><br><br>'
 always_allow_html: TRUE
 output: 
-  github_document: default
   html_document: 
     code_folding: hide
     toc: yes
@@ -11,6 +10,7 @@ output:
     number_sections: no
     theme: spacelab
     highlight: tango
+  github_document: default
 ---
 <style>
 .title {
@@ -29,18 +29,17 @@ h1 {
 <br>
 
 <hr>
-# Packages, Data, and EDA
+# **Packages & Data**
 <hr>
 
 <br>
 <br>
 
-## Loading Initial Packages For Cleaning
+## Load Initial Packages For Cleaning
 <hr>
 ```{r, message=F, warning=F, fig.align='center'}
 #install.packages('janitor')
 #install.packages('aplore3')
-
 library(aplore3) # for our dataset
 library(tidyverse) # tools for viz/cleaning/etc
 library(janitor) # tools for cleaning
@@ -52,34 +51,28 @@ library(visdat) # visualize our missing data
 
 Takeaways: 
   
-  - Looking at the data we see that some of the weight values(in KG) are very low. assuming the low weight belongs to individuals who are older, maybe bed ridden, and have instances of sarcopenia this is plausible... but also it's good to keep this in mind moving forward. 
+  - Looking at the data we see that some of the weight values (in KG) are very low. Assuming the low weight belongs to individuals who are older - maybe bed ridden - and have instances of sarcopenia, this is plausible... but, it's also good to keep this in mind moving forward. 
   
-  - raterisk: This is a completely subjective topic. maybe interesting to see, but not expected that this will provide much insight. 
+  - Raterisk: This is a completely subjective topic. It may be interesting to see, but not expected to provide much insight. 
   
   - Duplicate data: There is instances of duplicated data in the site_id, phy_id. This makes sense since many sites will occur with repeating metrics and many physicians will also occur with those same metrics. 
   
-  - smoke has a very small sample of "Yes" (35)
+  - Smoke has a very small sample of "Yes" (35).
   
 ```{r, message=F, warning=F, fig.align='center'}
 # adding dataset into df call.
 df <- glow_bonemed  
-
 # looking at our data from afar 
 #glimpse(df) # alot of categorical vars (factor encoding)
-
 # for a look at a brief data description uncomment lines below:
 #?glow_bonemed 
 #?glow500
-
-
 # check for duplicated data
 # get_dupes(df, sub_id) # no duplicated data here which is what we'd like to see. 
 # get_dupes(df, site_id) # makes sense that we would have duplicated study sites.
 # get_dupes(df, phy_id) # makes sense that we would have duplicated physician id codes.
-
 # check for missing values
 #vis_miss(df) # great! No missing values. 
-
 # visualizing the summary of our data. 
 #summary(df)
 ```
@@ -87,65 +80,56 @@ df <- glow_bonemed
 <br>
 
 <hr>
-# EDA
+# **EDA**
 <hr>
 
 <br>
 
 ## EDA (Categorical)
 <hr>
-Step one: Visualize what the Yes/Nos look like in terms of fractures. 
+Step One: Visualize what the Yes/No's look like in terms of fractures. 
   
   - The plot below will show us without yet incorporating predictors, what is the percentages of yes/no that we are seeing in the data. 
   
-  - Findings are that it's not a very balanced split. 75% of the data have NO for fracture.
-  when we make predictive probabilities how will this influence the result? will we find that they are around this value with some higher/lower? *potential sanity check to our results later*
+  - Findings are that it's not a very balanced split. 75% of the data have NO for fracture. When we make predictive probabilities how will this influence the result? will we find that they are around this value with some higher/lower? *(potential sanity check to our results later)*
   
-  - Additional Note... Unbalanced data is OK.. this should be revisted in our thresholding
+  - Additional Note... Unbalanced data is OK.. this should maybe be revisited in our threshold.
 ```{r, message=F, warning=F, fig.align='center'}
 library(ggplot2)
 library(gridExtra)
-
 c <- df %>% # allows us to gather table of y/n fracture, the cnt, and percent. 
   group_by(fracture) %>% 
   summarise(cnt = n()) %>% 
   mutate(perc=round(cnt/sum(cnt),4))
-
 #c # shows the result of the above
-
 # bar plot visual of the above. 
 p<- ggplot(c, aes(x = fracture, y = perc, colour = fracture)) + 
   geom_bar(aes(fill = fracture), show.legend = F, stat = 'identity') +
   ylab('Proportion of Fracture') + xlab("Fracture") +
   geom_text(aes(label = paste0(perc *100, "%")), vjust = 2, size = 5, color = 'black')
-
 ```
 
-Fracture - Menopause before age 45
+Fracture - Menopause Before Age 45
 
   - When and individual did not have menopause before age 45 (pre-menopause) the chances of having a fracture are much higher even though there is only a 25% of having a fracture.
   
-  - If you are in the no premenopause group, it is approx 80% chance that you have a fracture. it decreases as for those who did have premenopause. 
-  
-```{r, message=F, warning=F, fig.align='center'}
+  - If you are in the no pre-menopause group, it is approx 80% chance that you have a fracture. it decreases as for those who did have pre-menopause. 
 
+```{r, message=F, warning=F, fig.align='center'}
 c1 <- df %>% 
   group_by(fracture, premeno) %>% 
   summarise(cnt=n()) %>% 
   mutate(perc=round(cnt/sum(cnt),4))%>% 
   arrange(desc(perc))
-
 #c1
-
 p1<- ggplot(c1[c(2,3),], aes(x = reorder(premeno, -perc), y = perc, colour = premeno))+
   geom_bar(aes(fill = premeno), show.legend = F, stat = 'identity') + 
   ylab('Proportion of Fracture') +
   xlab('Menopause before age 45')+
   geom_text(aes(label = paste0(perc *100, "%")), vjust = 2, size = 5, color = 'black')
-
 ```
 
-Fracture - momfrac (mother had hip fracture)
+Fracture - Momfrac (Mother Had Hip Fracture)
 
   - When an individual did not have a mother that had a hip fracture the chances of having a fracture are much higher (80.8%) even though there is only a 25% of having a fracture. 
 
@@ -157,20 +141,17 @@ c2 <- df %>%
   summarise(cnt=n()) %>% 
   mutate(perc = round(cnt/sum(cnt),4)) %>%
   arrange(desc(perc))
-
 #c2
-
 p2<- ggplot(c2[c(2,3),], aes(x = reorder(momfrac, -perc), y = perc, color = momfrac)) + 
   geom_bar(aes(fill = momfrac), show.legend = F, stat = 'identity') + 
   ylab('Proportion of Fracture') + 
   xlab("Mother had Hip fracture") + 
   geom_text(aes(label = paste0(perc * 100, "%")), vjust = 2, size = 5, color = "black")
-
 ```
 
-Fracture - smoke (current or former smoker)
+Fracture - Smoke (Current / Former Smoker)
 
-  - When an individual falls in the category of former/current smoker the chances of having a fracture are much higher(94.4%) even though there is only a 25% of having a fracture.
+  - When an individual falls in the category of former/current smoker the chances of having a fracture are much higher (94.4%) even though there is only a 25% of having a fracture.
 
 ```{r, message=F, warning=F, fig.align='center'}
 c3 <- df %>% 
@@ -178,18 +159,17 @@ c3 <- df %>%
   summarise(cnt=n()) %>% 
   mutate(perc = round(cnt/sum(cnt),4)) %>%
   arrange(desc(perc))
-
 #c3
-
 p3<- ggplot(c3[c(1,4),], aes(x = reorder(smoke, -perc), y = perc, color = smoke)) + 
   geom_bar(aes(fill = smoke), show.legend = F, stat = 'identity') + 
   ylab('Proportion of Fracture') + 
   xlab("Former/Current Smoker") + 
   geom_text(aes(label = paste0(perc * 100, "%")), vjust = 1, size = 5, color = "black")
-
 ```
 
-fracture - raterisk (self-reported risk of fracture: classified by the following groups...less than others of same age, same as others of same age, greater than others of same age)
+Fracture - Raterisk (Self-Reported Risk of Fracture)
+
+  - Classified by the following groups...less than others of same age, same as others of same age, greater than others of same age).
 
   - An issue with this is that it's a very subjective measure. WHY are they rating this? is it based off non-inclusive criteria that the physician provided? is it based on their own physical comparison with peers? is it simply low-self esteem/ high self esteem?  I would imagine that from a predictive model stand point this is NOT something that should be included. 
   
@@ -199,20 +179,17 @@ c4 <- df %>%
   summarise(cnt=n()) %>% 
   mutate(perc = round(cnt/sum(cnt),4)) %>%
   arrange(desc(perc))
-
 #c4
-
 p4<- ggplot(c4[c(1,2,6),], aes(x = reorder(raterisk, -perc), y = perc, color = raterisk)) + 
   geom_bar(aes(fill = raterisk), show.legend = F, stat = 'identity') + 
   ylab('Proportion of Fracture') + 
   xlab("Self-Risk-Score") + 
   geom_text(aes(label = paste0(perc * 100, "%")), vjust = 2, size = 4, color = "black")
-
 ```
 
-fracture - bonemed (bone medications at enrollment)
+Fracture - Bonemed (Bone Medications at Enrollment)
 
-  - When an individual is in the category of No medication at enrollment the chances of having a fracture are much higher(63.2%) even though there is only a 25% of having a fracture.
+  - When an individual is in the category of No medication at enrollment the chances of having a fracture are much higher (63.2%) even though there is only a 25% of having a fracture.
   
 ```{r, message=F, warning=F, fig.align='center'}
 c5 <- df %>% 
@@ -220,20 +197,17 @@ c5 <- df %>%
   summarise(cnt=n()) %>% 
   mutate(perc = round(cnt/sum(cnt),4)) %>%
   arrange(desc(perc))
-
 #c5
-
 p5<- ggplot(c5[c(2,3),], aes(x = reorder(bonemed, -perc), y = perc, color = bonemed)) + 
   geom_bar(aes(fill = bonemed), show.legend = F, stat = 'identity') + 
   ylab('Proportion of Fracture') + 
   xlab("Medication at Enrollment") + 
   geom_text(aes(label = paste0(perc * 100, "%")), vjust = 2, size = 5, color = "black")
-
 ```
 
-fracture - bonemed_fu (bone medications at follow-up)
+Fracture - Bonemed_fu (Bone Medications at Follow-up)
 
-  - When an individual is in the category of No medication at Follow-up the chances of having a fracture are higher(57.6% vs 42.4%) even though there is only a 25% of having a fracture.
+  - When an individual is in the category of No medication at Follow-up the chances of having a fracture are higher (57.6% versus 42.4%) even though there is only a 25% of having a fracture.
 
 ```{r, message=F, warning=F, fig.align='center'}
 c6 <- df %>% 
@@ -241,20 +215,17 @@ c6 <- df %>%
   summarise(cnt=n()) %>% 
   mutate(perc = round(cnt/sum(cnt),4)) %>%
   arrange(desc(perc))
-
 #c6
-
 p6<-ggplot(c6[c(2,3),], aes(x = reorder(bonemed_fu, -perc), y = perc, color = bonemed_fu)) + 
   geom_bar(aes(fill = bonemed_fu), show.legend = F, stat = 'identity') + 
   ylab('Proportion of Fracture') + 
   xlab("Medication at Follow-up") + 
   geom_text(aes(label = paste0(perc * 100, "%")), vjust = 2, size = 5, color = "black")
-
 ```
 
-Fracture - bonetreat (bone medications both at enrollment and follow-up)
+Fracture - Bonetreat (Bone Medications Both at Enrollment & Follow-up)
 
-  - When an individual is in the category of No treatment at both enrollment and follow-up the chances of having a fracture are much higher(68% vs. 32%) even though there is only a 25% of having a fracture.
+  - When an individual is in the category of No treatment at both enrollment and follow-up the chances of having a fracture are much higher (68% versus 32%) even though there is only a 25% of having a fracture.
 
 ```{r, message=F, warning=F, fig.align='center'}
 c7 <- df %>% 
@@ -262,45 +233,37 @@ c7 <- df %>%
   summarise(cnt=n()) %>% 
   mutate(perc = round(cnt/sum(cnt),4)) %>%
   arrange(desc(perc))
-
 #c7
-
 p7<-ggplot(c7[c(2,3),], aes(x = reorder(bonetreat, -perc), y = perc, color = bonetreat)) + 
   geom_bar(aes(fill = bonetreat), show.legend = F, stat = 'identity') + 
   ylab('Proportion of Fracture') + 
   xlab("Treatment: Enrollment & Follow-up") + 
   geom_text(aes(label = paste0(perc * 100, "%")), vjust = 2, size = 5, color = "black")
-
 ```
 
-
-Fracture - Arms are needed to stand from a chair
+Fracture - Arms Needed to Stand From a Chair
   
   - Very balanced between the two groups. 
   
-  - When an individual is in the category of needing assistance to stand the chances of having a fracture are higher(50.4% vs 49.6%) even though there is only a 25% of having a fracture.
+  - When an individual is in the category of needing assistance to stand the chances of having a fracture are higher( 50.4% versus 49.6%) even though there is only a 25% of having a fracture.
+  
 ```{r, message=F, warning=F, fig.align='center'}
-
 c8 <- df %>% 
   group_by(fracture, armassist) %>% 
   summarise(cnt=n()) %>% 
   mutate(perc=round(cnt/sum(cnt),4))%>% 
   arrange(desc(perc))
-
 #c8
-
 p8<- ggplot(c8[c(2,3),], aes(x = reorder(armassist, -perc), y = perc, colour = armassist))+
   geom_bar(aes(fill = armassist), show.legend = F, stat = 'identity') + 
   ylab('Proportion of Fracture') +
   xlab('Assistance to Stand')+
   geom_text(aes(label = paste0(perc *100, "%")), vjust = 2, size = 5, color = 'black')
-
 ```
 
+Fracture - Priorfrac (History of Prior Fracture)
 
-fracture - priorfrac (history of prior fracture)
-
-  - When an individual is in the category of NOT having had a prior fracture the chances of having a fracture are higher(58.4% vs 41.6%) even though there is only a 25% of having a fracture.
+  - When an individual is in the category of NOT having had a prior fracture the chances of having a fracture are higher (58.4% versus 41.6%) even though there is only a 25% of having a fracture.
 
 ```{r, message=F, warning=F, fig.align='center'}
 c9 <- df %>% 
@@ -308,47 +271,37 @@ c9 <- df %>%
   summarise(cnt=n()) %>% 
   mutate(perc = round(cnt/sum(cnt),4)) %>%
   arrange(desc(perc))
-
 #c9
-
 p9<-ggplot(c9[c(2,3),], aes(x = reorder(priorfrac, -perc), y = perc, color = priorfrac)) + 
   geom_bar(aes(fill = priorfrac), show.legend = F, stat = 'identity') + 
   ylab('Proportion of Fracture') + 
   xlab("Prior Fracture") + 
   geom_text(aes(label = paste0(perc * 100, "%")), vjust = 2, size = 5, color = "black")
-
 ```
 
+Fracture - BMI (Body Mass Index)
+  - Some domain expertise here: there is evidence that individuals who are heavier tend to have less instances of osteoporosis, and hip/bone fractures. this is unsurprising to see here and is a good depiction of prior research. 
 
-Fracture - bmi - body mass index
-
-  - Some domain expertise here: there is evidence that individuals who are heavier tend to have less instances of osteoperosis, and hip/bone fractures. this is unsuprising to see here and is a good depiction of prior research. 
-
-  - Including this variable into the model should be something that is significat based on the trend we see, although the instance of "underwieght" is interesting and may require some investigation. 
+  - Including this variable into the model should be something that is significant based on the trend we see, although the instance of "underweight" is interesting and may require some investigation. 
   
-  - When an individual is in the category "Healthy Weight" the chances of having a fracture are highest (35.2%), followed by Overweight (32.8%), followed by Obesity(30.4%), and lastly Underweight (1.6%).
+  - When an individual is in the category "Healthy Weight" the chances of having a fracture are highest (35.2%), followed by Overweight (32.8%), followed by Obesity (30.4%), and lastly Underweight (1.6%).
 ```{r, message=F, warning=F, fig.align='center'}
 # transforming numeric into categorical using widley accepted BMI categories
 df$bmi.cat <- ifelse(df$bmi < 18.5, "Underweight", 
                               ifelse(df$bmi < 25, "Healthy weight",
                                      ifelse(df$bmi < 30, "Overweight", "Obesity")))
-
 c10 <- df %>% 
   group_by(fracture, bmi.cat) %>% 
   summarise(cnt=n()) %>% 
   mutate(perc=round(cnt/sum(cnt),4))%>% 
   arrange(desc(perc))
-
 #c10
-
 p10<- ggplot(c10[c(2,3,5,8),], aes(x = reorder(bmi.cat, -perc), y = perc, colour = bmi.cat))+
   geom_bar(aes(fill = bmi.cat), show.legend = F, stat = 'identity') + 
   ylab('Proportion of Fracture') +
   xlab('BMI Categories')+
   geom_text(aes(label = paste0(perc *100, "%")), vjust = 1, size = 4, color = 'black')
-
 ```
-
 
 <br>
 
@@ -356,44 +309,36 @@ p10<- ggplot(c10[c(2,3,5,8),], aes(x = reorder(bmi.cat, -perc), y = perc, colour
 <hr>
 
 ```{r, message=F, warning=F, fig.align='center'}
-
 grid.arrange(p,p1,p2,p3,p4,
              heights = c(1,1))
 
 grid.arrange(p5,p6,p7,p8,p9,p10,
              heights= c(1,1),
              widths = c(1,1,1.6))
-
 ```
 
 <br>
 <br>
 
 ## Visualizing "Important" Categorical Predictors
-
-
-
 <hr>
 
 ```{r, message=F, warning=F, fig.align='center'}
 grid.arrange(p,p1,p2,p3,p4,
              heights = c(1,1))
-
 grid.arrange(p5,p7,p10,
              heights = c(1,1),
              widths = c(1,1,1.6))
 ```
 
-
 ## EDA (Numerical)
 <hr>
 
-We would like to look at some of the relationships for the numerical categories in our data. 
-Before we can do this it is important for us to create a numerical category for fracture so that we can create our LOESS plot. 
+We would like to look at some of the relationships for the numerical categories in our data. Before we can do this it is important for us to create a numerical category for fracture so that we can create our LOESS plot. 
   
   - Note to smooth the curve out some, we can use span values (such as 1.25), either way this is artificial humps and bumps, try not to pay attention to the overall movements and look instead at the trend/association of how the data moves with increasing/decreasing values. 
   
-  - Note for complex models We can add categorical values to this (interactions)  | also facet wrapping will allow us to view them separate. 
+  - Note for complex models We can add categorical values to this (interactions). Also, facet wrapping will allow us to view them separate. 
   
 ```{r, message=F, warning=F, fig.align='center'}
 # numercial form of fracture
@@ -426,7 +371,6 @@ LOESS WEIGHT:
 lp2<- df %>% ggplot(aes(x = weight, y = fracture.num)) + 
   geom_point() + 
   geom_smooth(method = "loess", size = 1) + ylim(-.2, 1.2)+ ggtitle("LOESS: Weight")
-
 ```
 
 LOESS AGE:
@@ -436,7 +380,6 @@ LOESS AGE:
 lp3<- df %>% ggplot(aes(x = age, y = fracture.num)) +
   geom_point() +
   geom_smooth(method = "loess", size = 1) + ylim(-.2, 1.2)+ ggtitle("LOESS: Age")
-
 ```
 
 LOESS HEIGHT:
@@ -455,14 +398,12 @@ LOESS fracscore (Fracture Risk Score (Composite Risk Score)):
 lp5<- df %>% ggplot(aes(x = fracscore, y = fracture.num)) + 
   geom_point()+
   geom_smooth(method = "loess", size = 1) + ylim(-.2, 1.2)+ ggtitle("LOESS: fracscore")
-
 ```
 
 ```{r, message=F, warning=F, fig.align='center'}
 lp6 <- df %>% ggplot(aes(x = bmi, fracture.num)) + 
   geom_point()+
   geom_smooth(method = 'loess', size = 1) + ylim(-.2,1.2) + ggtitle("Loess: BMI")
-
 ```
 
 <br>
@@ -470,9 +411,7 @@ lp6 <- df %>% ggplot(aes(x = bmi, fracture.num)) +
 ## Numerical Plots
 <hr>
 ```{r, message=F, warning=F, fig.align='center'}
-grid.arrange(lp,lp1,lp2,ncol(2) )
-grid.arrange(lp3,lp4,lp5,lp6,
-             heights = c(1,1))
+grid.arrange(lp, lp1, lp2, lp3, lp4, lp5, lp6, ncol = 4, heights = c(1, 1))
 ```
 
 
@@ -482,270 +421,230 @@ grid.arrange(lp3,lp4,lp5,lp6,
 ```{r}
 df %>% ggplot(aes(x = sub_id, y = fracture, color = fracture))+
   geom_point(show.legend = F)+ xlab("Identification Code") + ylab("Fracture")
-
-
 df %>% ggplot(aes(x = site_id, y = fracture, color = fracture))+
   geom_point(show.legend = F)+ xlab("Identification Code") + ylab("Fracture")
-
 df %>% ggplot(aes(x = bmi, y = fracture, color = fracture)) + 
   geom_point(show.legend = F)
-
 ```
 
+<br>
+<br>
 
-# Extra EDA
-
-<h4>Correlation Plot</h4>
+## Correlation Plot
+<hr>
 ```{r, message=F, warning=F, fig.align='center'}
 library(ggcorrplot)
 library(GGally)
 num.df <- df
-
 # ordinal categorical into numerical
 rr.mapping <- c(Less = -1,Same = 0,Greater=1)
 num.df$raterisk.num <- as.numeric(rr.mapping[num.df$raterisk])
-
-
 # create a dataframe that is only numerical
 num.df <- num.df %>% select(where(is.numeric))
-
 ggpairs(num.df, ggplot2::aes(color = as.factor(fracture.num)))
-
 # remove irrelevant columns
 num.df.adj <- num.df[,-c(1,2,3,9)]
-
 # create correlation plot
-
 # calling cor function to put into var. 
 cor.data <- cor(num.df.adj)
-
 # generate the plot
 ggcorrplot(cor.data, outline.color = "black", lab = TRUE, title = 'Fracture Correlation Plot')
-
 ```
 
-
-
-
-# Test/Validation Split
-  - Becuase we have such a small dataset we will use a training size of 70% and test split of 30%. This is some what of a more aggressive split but should help to ensure we have an adequate amount of testing data. 
-
+<br>
+<br>
 
 ## Test/Validation Split
 <hr>
+
+Because we have such a small data set we will use a training size of 70% and test split of 30%. This is some what of a more aggressive split but should help to ensure we have an adequate amount of testing data. 
+
 ```{r, message=F, warning=F, fig.align='center'}
 library(caret)
 set.seed(12)
 trainIndex <- createDataPartition(df$fracture, p= .7, list = F) # p = proportion of data in train
-
 training <- df[trainIndex,]
 test <- df[-trainIndex,]
-
 # sanity check
 #nrow(training)
 #nrow(test)
-
 ```
 
 <br>
 <br>
 
 <hr>
-# Objective 1
+# **Objective 1 - Logistic Regression Model**
 <hr>
-
 
 <br>
 
-## Fit Logistic Regression Model
+**Note:** The coefficients are LOG-ODDS and not ratios. To obtain ratios we must exp(coef).
+
+<br>
+
+## Model 1 Additive
 <hr>
-
-
-
-
-  - Note that the coefficients are LOG-ODDS and not ratios.. to obtain ratios we must exp(coef)
-
-<h4>Base Additive Model:</h4>
-
-  - To begin we created a model with nearly every predictor so that we could see at a baseline what was significant and what was not (while in the presence of other variables)
   
-  - ANOVA: In the presence of other variables, variables such as priorfrac, age, bmi(right on the cusp of rejection), raterisk(on cusp), and bonetreat are significant, while the other feats. in the model are not significant at the .05 level of significance. 
+  - To begin we created a model with nearly every predictor so that we could see at a baseline what was significant and what was not (while in the presence of other variables).
+  
+  - ANOVA: In the presence of other variables, variables such as priorfrac, age, bmi (right on the cusp of rejection), raterisk (on cusp), and bonetreat are significant, while the other feats. in the model are not significant at the .05 level of significance. 
   
   - The reasoning for keeping bmi in the model is because there is evidence in scientific literature that different classes of BMI tend to have different levels of susceptibility to osteoporosis and thus bone fractures. 
   
-  - AIC of our base.model is 393.24 (no)
+  - AIC of our base.model is 393.24 (no).
 
-# Model 1 Additive
+<br>
+
 ```{r, message=F, warning=F, fig.align='center'}
 library(ResourceSelection)
 library(car)
-
 # removing sub_id, raterisk, fracture.num
 adj.training <- training[,-c(1,20)]
 #colnames(adj.training) #sanity check
-
 base.model <- glm(fracture~., family = "binomial", data = adj.training)
-
 summary(base.model)
-
 # anova 
 anova(base.model, test = "Chisq")
-
 ```
 
-<h4>Base Adj. Model:</h4>
+<br>
 
+## Model 2 Additive
+<hr>
+  
   - Taking what was significant in our first model (base.model) we will now add it to our second model (base.adj) model and compare it's performance to determine which provides a better fit. 
   
-  - base.adj model removes 6 predictors that were in the base.model and yields a slightly improved AIC of 383.12 compared to base.model AIC 393.24
+  - base.adj model removes 6 predictors that were in the base.model and yields a slightly improved AIC of 383.12 compared to base.model AIC 393.24.
 
-  - The p-value from our anova of 0.212 > .05 suggests that the difference in deviance between the two models is not statistically significant. This means that we fail to reject the null hypothesis and cannot conclude that Model 1 fits the data significantly better than Model 2, even though it has more predictors. We will proceed with Model 2 (base.adj model)
+  - The p-value from our anova of 0.212 > .05 suggests that the difference in deviance between the two models is not statistically significant. This means that we fail to reject the null hypothesis and cannot conclude that Model 1 fits the data significantly better than Model 2, even though it has more predictors. We will proceed with Model 2 (base.adj model).
 
-# Model 2 Additive
-```{r}
-
+```{r, message=F, warning=F, fig.align='center'}
 base.adj <- glm(fracture~priorfrac+age+bmi+raterisk+bonetreat, data = training, family = "binomial")
-
 summary(base.adj)
-
 # anova comparing both models 
 anova(base.model,base.adj,test = "Chisq")
-
 # checking for multicollinearity issues. 
 #vif(base.adj) #no issues present
-
 ```
 
+<br>
 
-
-
-
-
-<h4>Simple (Additive) Model - Multiple Logistic Regression fit</h4>
-
+## Model 3 Additive
+<hr>
+  
   - There are some variables that were not included in the previous two models, but have either shown potential visually, or would make "sense" to have some effect on predicting fractures. These are included here in this simple (additive) model. 
   
   - We will take the same approach and start with this model then investigate it further to determine what is significant or what can be removed. 
 
-# Model 3 Additive  
 ```{r, message=F, warning=F, fig.align='center'}
-
 # fitting an additive multiple logistic regression model
 simple <- glm(fracture ~ smoke + armassist + momfrac + premeno + bmi + height + age + bonemed + bonetreat + bonemed_fu, data = training, family ="binomial")
-
 # looking at coefficients
 (simple.summary<- summary(simple))
-
 # looking for Multicollinearity
 #(simple.vif <- vif(simple))
-
 # AIC metric can help us compare against models with interactions later to determine if the interactions are important or not. 
 simple.AIC <- AIC(simple)
-
 # ANOVA
 anova(simple, test = "Chisq")
 ```
 
+<br>
 
-
-
-
-<h4>Reducing the model predictors:</h4>
+## Model 4 Additive
+<hr>
   
   - Reduction of the features is based only on what was deemed significant.
   
-  - The p-value from our anova of .1985 > .05 suggests that the difference in deviance between the two models is not statistically significant. This means that we fail to reject the null hypothesis and cannot conclude that Simple model fits the data significantly better than red.model, even though it has more predictors. We will proceed with (red.model) 
+  - The p-value from our anova of .1985 > .05 suggests that the difference in deviance between the two models is not statistically significant. This means that we fail to reject the null hypothesis and cannot conclude that Simple model fits the data significantly better than red.model, even though it has more predictors. We will proceed with (red.model).
   
   - The p-value from our anova of .08925 > .05 suggests that the difference in deviance between the two models is not statistically significant. This means that we fail to reject the null hypothesis and cannot conclude that Base.adj fits the data significantly better than red.model, even though it has more predictors. We will proceed with "red.model" as our "best performing" in terms of ANOVA comparison, but will still reference and use the base.adj model. 
   
-  - although the base.adj model doesn't perform as well as the red.model, it's features allow for real world applicability in predicting fractures. While it would be nice for most of the explanation to be summed up and accounted for over 4 variables the human body has many factors that can contribute to bone health such as hormones, lifestyle, activity level, etc. It is for these reasons that we will actually proceed with both models in hand as we look for the appropriate application. 
+  - Although the base.adj model doesn't perform as well as the red.model, it's features allow for real world applicability in predicting fractures. While it would be nice for most of the explanation to be summed up and accounted for over 4 variables the human body has many factors that can contribute to bone health such as hormones, lifestyle, activity level, etc. It is for these reasons that we will actually proceed with both models in hand as we look for the appropriate application. 
 
-# Model 4 Additive  
 ```{r, message=F, warning=F, fig.align='center'}
 red.model <- glm(fracture~ armassist+age+bonemed_fu+bonemed,
                  data = training,
                  family ="binomial")
-
 # summary of coef. 
 summary(red.model)
-
 # AIC metric can help us compare against models with interactions later to determine if the interactions are important or not. 
 red.aic <- AIC(red.model)
-
 # looking for Multicollinearity
 red.vif <- vif(red.model) # we do have a high VIF in bonetreat.
-
 # Hosmer-Lemeshow test
 red.hlt <- hoslem.test(red.model$y, fitted(red.model))
-
 # ANOVA Comparison 
 anova(simple, red.model, test = "Chisq") # FTR null : proceed with red.model
-
 # ANOVA BASE.ADJ/RED
 anova(base.adj,red.model,test = "Chisq") # FTR Null: proceed with red.model
 ```
 
+<br>
 
-# Interpretation of coefficients
+## Interpretation of Coefficients
+<hr>
 
-<h4>Red.Model</h4>
+**Log-Odds:**
+    
+  - AGE: The positive coefficient of 0.0342221 indicates that for every one-unit increase in age, the log odds of having a fracture increase by 0.0342221, holding all other predictors constant. This predictor is statistically significant (p = 0.0267), meaning that age has a significant effect on the probability of fracture.
+    
+  - PRIORFRAC(YES) The positive coefficient of 0.6183073 indicates that if a person has had a prior fracture (priorfrac = Yes), the log odds of having a fracture increase by 0.6183073, holding all other predictors constant. This predictor is also statistically significant (p = 0.0322), indicating that having a prior fracture increases the risk of having another fracture.
+    
+  - HEIGHT The coefficient of -0.0008537 suggests a very small negative relationship between height and the log odds of having a fracture, holding all other predictors constant. However, this predictor is not statistically significant (p = 0.9679), so we cannot conclude that height has an impact on the probability of a fracture.
+    
+  - MOMFRAC(YES)  The positive coefficient of 0.5171833 indicates that if a person's mother has had a fracture (momfrac = Yes), the log odds of having a fracture increase by 0.5171833, holding all other predictors constant. However, this predictor is not statistically significant (p = 0.1449), so we cannot conclude that having a mother with a fracture affects the probability of a fracture.
+    
+  - BONEMED(YES) The positive coefficient of 0.0169533 suggests a very small positive relationship between taking bone medication (bonemed = Yes) and the log odds of having a fracture, holding all other predictors constant. However, this predictor is not statistically significant (p = 0.9736), so we cannot conclude that taking bone medication has an impact on the probability of a fracture.
+    
+  - BMI The positive coefficient of 0.0332507 indicates that for every one-unit increase in BMI, the log odds of having a fracture increase by 0.0332507, holding all other predictors constant. However, this predictor is not statistically significant (p = 0.1372), so we cannot conclude that BMI has an impact on the probability of a fracture.
+    
+  - BONEMED_FU(YES)  The positive coefficient of 0.6969686 indicates that if a person has follow-up bone medication (bonemed_fu = Yes), the log odds of having a fracture increase by 0.6969686, holding all other predictors constant. However, this predictor is not statistically significant (p = 0.1646), so we cannot conclude that follow-up bone medication has an impact on the probability of a fracture.
 
-<h4>Base.Adj Model</h4>
+<br>
 
-  - Log-odds: 
+**Odds Ratios:**
     
-    - AGE: The positive coefficient of 0.0342221 indicates that for every one-unit increase in age, the log odds of having a fracture increase by 0.0342221, holding all other predictors constant. This predictor is statistically significant (p = 0.0267), meaning that age has a significant effect on the probability of fracture
+  - AGE  The odds ratio for age is 1.0348 with a 95% confidence interval of [1.0040, 1.0669]. This means that for every one-unit increase in age, the odds of having a fracture increase by about 3.48%, holding all other predictors constant. The confidence interval suggests that the true odds ratio for age lies between 1.0040 and 1.0669 with 95% confidence.
     
-    - PRIORFRAC(YES) The positive coefficient of 0.6183073 indicates that if a person has had a prior fracture (priorfrac = Yes), the log odds of having a fracture increase by 0.6183073, holding all other predictors constant. This predictor is also statistically significant (p = 0.0322), indicating that having a prior fracture increases the risk of having another fracture.
+  - PRIORFRAC(YES)  The odds ratio for priorfracYes is 1.8555 with a 95% confidence interval of [1.0484, 3.2589]. This means that if a person has had a prior fracture (priorfrac = Yes), the odds of having a fracture are about 1.8555 times higher than someone who hasn't had a prior fracture, holding all other predictors constant. The confidence interval suggests that the true odds ratio for priorfracYes lies between 1.0484 and 3.2589 with 95% confidence.
     
-    - HEIGHT The coefficient of -0.0008537 suggests a very small negative relationship between height and the log odds of having a fracture, holding all other predictors constant. However, this predictor is not statistically significant (p = 0.9679), so we cannot conclude that height has an impact on the probability of a fracture.
+  - HEIGHT The odds ratio for height is 0.9991 with a 95% confidence interval of [0.9582, 1.0417]. This means that for every one-unit increase in height, the odds of having a fracture decrease by about 0.09%, holding all other predictors constant. However, as previously mentioned, the effect of height is not statistically significant. The confidence interval for the height odds ratio includes 1, which further supports the lack of a significant effect.
     
-    - MOMFRAC(YES)  The positive coefficient of 0.5171833 indicates that if a person's mother has had a fracture (momfrac = Yes), the log odds of having a fracture increase by 0.5171833, holding all other predictors constant. However, this predictor is not statistically significant (p = 0.1449), so we cannot conclude that having a mother with a fracture affects the probability of a fracture.
+  - MOMFRAC(YES) The odds ratio for momfracYes is 1.6778 with a 95% confidence interval of [0.8218, 3.3282]. This means that if a person's mother has had a fracture (momfrac = Yes), the odds of having a fracture are about 1.6778 times higher than someone whose mother hasn't had a fracture, holding all other predictors constant. However, the effect of momfracYes is not statistically significant, as the confidence interval includes 1.
     
-    - BONEMED(YES) The positive coefficient of 0.0169533 suggests a very small positive relationship between taking bone medication (bonemed = Yes) and the log odds of having a fracture, holding all other predictors constant. However, this predictor is not statistically significant (p = 0.9736), so we cannot conclude that taking bone medication has an impact on the probability of a fracture.
+  - BONEMED(YES) The odds ratio for bonemedYes is 1.0171 with a 95% confidence interval of [0.36596, 2.7755]. This means that if a person is taking bone medication (bonemed = Yes), the odds of having a fracture are about 1.0171 times higher than someone who is not taking bone medication, holding all other predictors constant. However, the effect of bonemedYes is not statistically significant, as the confidence interval includes 1.
     
-    - BMI The positive coefficient of 0.0332507 indicates that for every one-unit increase in BMI, the log odds of having a fracture increase by 0.0332507, holding all other predictors constant. However, this predictor is not statistically significant (p = 0.1372), so we cannot conclude that BMI has an impact on the probability of a fracture.
+  - BMI The odds ratio for BMI is 1.0338 with a 95% confidence interval of [0.9891, 1.0801]. This means that for every one-unit increase in BMI, the odds of having a fracture increase by about 3.38%, holding all other predictors constant. However, the effect of BMI is not statistically significant, as the confidence interval includes 1.
     
-    - BONEMED_FU(YES)  The positive coefficient of 0.6969686 indicates that if a person has follow-up bone medication (bonemed_fu = Yes), the log odds of having a fracture increase by 0.6969686, holding all other predictors constant. However, this predictor is not statistically significant (p = 0.1646), so we cannot conclude that follow-up bone medication has an impact on the probability of a fracture.
+  - BONEMED_FU(YES)  The odds ratio for bonemed_fuYes is 2.0075 with a 95% confidence interval of [0.7423, 5.4109]. This means that if a person has follow-up bone medication (bonemed_fu = Yes), the odds of having a fracture are about 2.0075 times higher than someone who does not have follow-up bone medication, holding all other predictors constant. However, the effect of bonemed_fuYes is not statistically significant, as the confidence interval includes 1.
 
+<br>
 
-  - Odds Ratios:
-    
-    - AGE  The odds ratio for age is 1.0348 with a 95% confidence interval of [1.0040, 1.0669]. This means that for every one-unit increase in age, the odds of having a fracture increase by about 3.48%, holding all other predictors constant. The confidence interval suggests that the true odds ratio for age lies between 1.0040 and 1.0669 with 95% confidence.
-    
-    - PRIORFRAC(YES)  The odds ratio for priorfracYes is 1.8555 with a 95% confidence interval of [1.0484, 3.2589]. This means that if a person has had a prior fracture (priorfrac = Yes), the odds of having a fracture are about 1.8555 times higher than someone who hasn't had a prior fracture, holding all other predictors constant. The confidence interval suggests that the true odds ratio for priorfracYes lies between 1.0484 and 3.2589 with 95% confidence.
-    
-    - HEIGHT The odds ratio for height is 0.9991 with a 95% confidence interval of [0.9582, 1.0417]. This means that for every one-unit increase in height, the odds of having a fracture decrease by about 0.09%, holding all other predictors constant. However, as previously mentioned, the effect of height is not statistically significant. The confidence interval for the height odds ratio includes 1, which further supports the lack of a significant effect.
-    
-    - MOMFRAC(YES) The odds ratio for momfracYes is 1.6778 with a 95% confidence interval of [0.8218, 3.3282]. This means that if a person's mother has had a fracture (momfrac = Yes), the odds of having a fracture are about 1.6778 times higher than someone whose mother hasn't had a fracture, holding all other predictors constant. However, the effect of momfracYes is not statistically significant, as the confidence interval includes 1.
-    
-    - BONEMED(YES) The odds ratio for bonemedYes is 1.0171 with a 95% confidence interval of [0.36596, 2.7755]. This means that if a person is taking bone medication (bonemed = Yes), the odds of having a fracture are about 1.0171 times higher than someone who is not taking bone medication, holding all other predictors constant. However, the effect of bonemedYes is not statistically significant, as the confidence interval includes 1.
-    
-    - BMI The odds ratio for BMI is 1.0338 with a 95% confidence interval of [0.9891, 1.0801]. This means that for every one-unit increase in BMI, the odds of having a fracture increase by about 3.38%, holding all other predictors constant. However, the effect of BMI is not statistically significant, as the confidence interval includes 1.
-    
-    - BONEMED_FU(YES)  The odds ratio for bonemed_fuYes is 2.0075 with a 95% confidence interval of [0.7423, 5.4109]. This means that if a person has follow-up bone medication (bonemed_fu = Yes), the odds of having a fracture are about 2.0075 times higher than someone who does not have follow-up bone medication, holding all other predictors constant. However, the effect of bonemed_fuYes is not statistically significant, as the confidence interval includes 1.
-
-
-<h4>Practical/Statistical Significance of Important Factors</h4>
+**Statistical Significance:**
   
   - Age and PriorFrac were found to be statistically significant at the alpha = .05 level of significance. This indicates that there is sufficient evidence to suggest that these predictors have a non-zero effect on the odds of having a fracture, and their relationship with the response variable is unlikely to be due to random chance. 
 
-  - Practical Significance:
-    
-    - AGE: The odds of having a fracture increase by about 3.48%, holding all other predictors constant, for every one year increase in age. This suggests that on a practical level age is an important risk factor for fractures, and interventions aimed at reducing fracture risk should consider age as a key factor.
-    
-    - Prior Fracture: If a person had a prior fracture the odds of having a fracture are about 1.86 times higher, when holding all other predictors constant. From a practical standpoint this indicates that individuals with a history of fractures are at a significantly higher risk of experiencing another fracture. it's important to identify and monitor such individuals to develop targeted interventions that can help mitigate this risk. 
+<br>
 
-# Effect Plots 
-one at a time (Additive Reduced Model):
+**Practical Significance:**
+    
+  - AGE: The odds of having a fracture increase by about 3.48%, holding all other predictors constant, for every one year increase in age. This suggests that on a practical level age is an important risk factor for fractures, and interventions aimed at reducing fracture risk should consider age as a key factor.
+    
+  - Prior Fracture: If a person had a prior fracture the odds of having a fracture are about 1.86 times higher, when holding all other predictors constant. From a practical standpoint this indicates that individuals with a history of fractures are at a significantly higher risk of experiencing another fracture. it's important to identify and monitor such individuals to develop targeted interventions that can help mitigate this risk. 
 
-  - Because we are working with an additive model, plotting one by one is ok to do without losing much information. 
+<br>
+
+## Individual Effect Plots
+<hr>
+
+**Note:** Because we are working with an additive model, plotting one by one is ok to do without losing much information. 
 
 ```{r, message=F, warning=F, fig.align='center'}
 library(sjPlot)
 library(sjmisc)
 library(effects)
-
 # effect plot
 plot_model(red.model, type = "pred", terms = "armassist")
 plot_model(red.model, type = "pred", terms= "bonemed_fu")
@@ -753,42 +652,40 @@ plot_model(red.model, type = "pred", terms = "bonemed")
 plot_model(red.model, type = "pred",terms = "age")
 # identifies all of the high-order terms in a model and returns a list of "eff" or "effpoly" objects.
 all.effects <- allEffects(red.model)
-
 # plots the effect plosts
 plot(all.effects,multiline=T)
-
 ```
 
-Effect Plot Combo:
+<br>
+
+## Effect Plot Combos
+<hr>
   
   - Provides an intuitive way to understand impact of each predictor on the outcome, while holding the other pred. constant. 
   
 ```{r, message=F, warning=F, fig.align='center'}
-
 # effect plot
 plot_model(red.model, type = "pred", terms = c("bonemed","armassist"))
 plot_model(red.model, type ="pred", terms = c("age","bonemed_fu"))
 plot_model(red.model, type = "pred", terms = c("age","armassist"))
 plot_model(red.model, type = "pred", terms = c("armassist","bonemed_fu"))
-
 ```
 
-<hr>
-# ROC Curve for Final Additive Model
+<br>
+
+## ROC Curves
 <hr>
 
-<h4>Cross Validation & ROC Curve for Final Additive Model</h4>
+<br>
+
+**Cross Validation & ROC Curve for Final Additive Model**
 
 ```{r, message=F, warning=F, fig.align='center'}
 library(pROC)
-
 # parameters for train function
 fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, classProbs = T, summaryFunction = mnLogLoss)
-
 # set seed for reproduceability 
 set.seed(12)
-
-
 # training CARET mult. logi. regression model 
 base.adjust.cv <- train(fracture~age+priorfrac+height+momfrac+bonemed+bmi+bonemed_fu,
                data = training,
@@ -796,20 +693,14 @@ base.adjust.cv <- train(fracture~age+priorfrac+height+momfrac+bonemed+bmi+boneme
                 method = "glm",
                 family = "binomial",
                 metric = "logLoss")
-
 summary(base.adjust.cv)
-
 base.aic <- AIC(base.adj) # 384.7314
-
 # make preds on the probabilty of each class in TRANING data
 add.model.predprob <- predict(base.adjust.cv,test, type = "prob")
-
 # compute the ROC curve
 add.model.roc <- roc(response = test$fracture, predictor = add.model.predprob$Yes, levels = c("Yes","No"))
-
 # optimal threshold
 optimal.threshold <- coords(add.model.roc, "best")
-
 # plot ROC curve
 plot(add.model.roc, print.thres = "best",
      #print.thres.best.method = "closest.topleft",
@@ -819,50 +710,39 @@ legend("bottomright",
        legend = 'Additive model',
        col = "red",
        lwd = 4, cex = 1, xpd = T, horiz = F)
-
 text(x = optimal.threshold[1], y = optimal.threshold[2], 
      labels = paste("Optimal Threshold =", round(optimal.threshold[1], 2)), 
      pos = 3)
-
 # get coord (threshold)
 coords <- coords(add.model.roc, "best",
                  #best.method = "closest.topleft",
                  ret = "threshold")
-
 # get optimal threshold
 threshold <- coords[[1]] # currently this is 0.3003923
-
 # make changes to threshold if desired
 adj.threshold <- threshold + 0 # low incr. ses. 
-
 # adjust the labeling by the desired threshold
 pred_label <- as.factor(ifelse(add.model.predprob$Yes > adj.threshold, "Yes","No"))
-
 # print confusion matrix
 (cm1 <- confusionMatrix(pred_label, test$fracture, positive = "Yes"))
-
 cat("\nSensitivity:", cm1$byClass[1],
     "\nSpecificity:", cm1$byClass[2],
     "\nPrevalence:", cm1$byClass[8],
     "\nPositive Predicitve Value:", cm1$byClass[3],
     "\nNegative Predicive Value:",cm1$byClass[4],
     "\nAUROC:", add.model.roc$auc)
-
 ```
 
 <br>
 <br>
 
-
-<h4>Second Additive Model for Comparison</h4>
+**Second Additive Model for Comparison**
 
 ```{r, message=F, warning=F, fig.align='center'}
 # parameters for train function
 fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, classProbs = T, summaryFunction = mnLogLoss)
-
 # set seed for reproduceability 
 set.seed(12)
-
 # training CARET mult. logi. regression model 
 add.model <- train(fracture~ armassist+age+bonemed_fu+bonemed,
                  data = training,
@@ -870,20 +750,14 @@ add.model <- train(fracture~ armassist+age+bonemed_fu+bonemed,
                  method = "glm",
                  family = "binomial",
                  metric = "logLoss")
-
 summary(add.model)
-
 red.aic <- AIC(red.model) # 385.2419
-
 # make preds on the probabilty of each class in TRANING data
 add.model.predprob <- predict(add.model,test, type = "prob")
-
 # compute the ROC curve
 add.model.roc <- roc(response = test$fracture, predictor = add.model.predprob$Yes, levels = c("Yes","No"))
-
 # optimal threshold
 optimal.threshold <- coords(add.model.roc, "best")
-
 # plot ROC curve
 #plot(add.model.roc, print.thres = "best", print.thres.best.method = "closest.topleft", col = "red")
 # add legend to plot
@@ -894,49 +768,35 @@ optimal.threshold <- coords(add.model.roc, "best")
 # text(x = optimal.threshold[1], y = optimal.threshold[2], 
 #      labels = paste("Optimal Threshold =", round(optimal.threshold[1], 2)), 
 #      pos = 1)
-
 # get coord (threshold)
 coords <- coords(add.model.roc, "best", best.method = "closest.topleft", ret = "threshold")
-
 # get optimal threshold
 threshold <- coords[[1]] # currently this is 0.2358135
-
 # make changes to threshold if desired
 adj.threshold <- threshold + 0
-
 # adjust the labeling by the desired threshold
 pred_label <- as.factor(ifelse(add.model.predprob$Yes > adj.threshold, "Yes","No"))
-
 # print confusion matrix
 #(cm2 <- confusionMatrix(pred_label, test$fracture, positive = "Yes"))
-
 # cat("\nSensitivity:", cm2$byClass[1],
 #     "\nSpecificity:", cm2$byClass[2],
 #     "\nPrevalence:", cm2$byClass[8],
 #     "\nPositive Predicitve Value:", cm2$byClass[3],
 #     "\nNegative Predicive Value:",cm2$byClass[4],
 #     "\nAUROC:", add.model.roc$auc)
-
 ```
 
-
 <br>
 <br>
 
-
 <hr>
-# Objective 2
+# **Objective 2 - Competing Models**
 <hr>
-
-
-# Interaction EDA - Objective 2
-
 
 <br>
 
 ## Investigating Potential for Interactions
 <hr>
-
 
 ```{r, message=F, warning=F, fig.align='center'}
 # age | bmi.cat 
@@ -944,60 +804,48 @@ df %>% ggplot(aes(x = age, y = fracture.num, color = bmi.cat)) +
   geom_point()+
   geom_smooth(method = "loess", size = 1, span = .75) +
   ylim(-.2, 1.2) + facet_wrap(~bmi.cat)
-
 # height | bmi.cat
 df %>% ggplot(aes(x = height, y = fracture.num, color = bmi.cat)) +
   geom_point()+
   geom_smooth(method = "loess", size = 1, span = .75) +
   ylim(-.2, 1.2) + facet_wrap(~bmi.cat)
-
 # bmi | fracscore 
 df %>% ggplot(aes(x = bmi, y = fracture.num, color = armassist)) +
   geom_point()+
   geom_smooth(method = "loess", size = 1, span = .75) +
   ylim(-.2, 1.2) + facet_wrap(~armassist)
-
-
 # bmi | fracscore  
 df %>% ggplot(aes(x = bmi, y = fracture.num, color = fracscore)) +
   geom_point()+
   geom_smooth(method = "loess", size = 1, span = .75) +
   ylim(-.2, 1.2) + facet_wrap(~fracscore)
-
-
-
 # height | raterisk  
 df %>% ggplot(aes(x = height, y = fracture.num, color = raterisk)) +
   geom_point()+
   geom_smooth(method = "loess", size = 1, span = .75) +
   ylim(-.2, 1.2) + facet_wrap(~raterisk)
-
-
 # height | bonemed - potential interaction ?  
 df %>% ggplot(aes(x = bmi, y = fracture.num, color = bonemed)) +
   geom_point(show.legend = F)+
   geom_smooth(method = "loess", size = 1, span = 1, show.legend = T) +
   ylim(-.2, 1.2) + facet_wrap(~bonemed) + ylab("Fracture") + xlab("Body Mass Index")
-
-
 df %>% ggplot(aes(x = age, y = fracture.num, color = as.factor(fracscore))) + 
   geom_smooth(method = "loess", size = 1, span= .75) + 
   ylim(-.2,1.2) + facet_wrap(~as.factor(fracscore))
-
 df %>% ggplot(aes(x = height, y = fracture.num, color = as.factor(bonemed)))+
   geom_smooth(method = "loess", size = 1, show.legend = T, span = 1) +
   ylim(-.2, 1.2) + facet_wrap(~bonemed) + ylab("Fracture") + xlab("Height in CM")
-
-
 # bmi | priorfrac  
 df %>% ggplot(aes(x = bmi, y = fracture.num, color = priorfrac )) +
   geom_point(show.legend = F)+
   geom_smooth(method = "loess", size = 1, span = 1, show.legend = T) +
   ylim(-.2, 1.2) + facet_wrap(~priorfrac)+ ylab("Fracture") + xlab("Body Mass Index")
-
 ```
 
-<h4>Complex Model (Interactive Model)</h4>
+<br>
+
+## Complex Model 1
+<hr>
 
   - The interaction qualification process began with visualizing various relationships to see if any visuals looked as if they would better be represented through interaction terms. 
   
@@ -1005,34 +853,31 @@ df %>% ggplot(aes(x = bmi, y = fracture.num, color = priorfrac )) +
   
   - Interactions were added one at a time to determine their significance in the model (if they were significant) and how much they helped/hurt the model. 
   
-  - if an interaction helped the model and was significant then it was kept, in this case it was height:bonemed_fu and bmi:bonemed. 
-
-# Complex Model 1  
+  - If an interaction helped the model and was significant then it was kept, in this case it was height:bonemed_fu and bmi:bonemed. 
+  
 ```{r, message=F, warning=F, fig.align='center'}
 complex <- glm(fracture~age+priorfrac+height+momfrac+bonemed+bmi+bonemed_fu+
                  height:bonemed_fu+bonemed:bmi,
                 data = training,
                 family = "binomial")
-
 complex.aic <- AIC(complex)
 summary(complex)
-
 # printing out all AIC metrics (note they are based on training data not test data)
 # cat("\nbase.adj Model (Additive):", base.aic,
 #     "\nRed Model (Additive):", red.aic,
 #     "\nComplex Model:", complex.aic)
 ```
 
+<br>
 
-<h4>Complex Model With Cross Validation</h4>
+## Complex Model 1 With Cross Validation
+<hr>
+
 ```{r, message=F, warning=F, fig.align='center'}
-
 # parameters for train function
 fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, classProbs = T, summaryFunction = mnLogLoss)
-
 # set seed for reproduceability 
 set.seed(12)
-
 # training CARET mult. logi. regression model 
 complex.cv <- train(fracture~age+priorfrac+height+momfrac+bonemed+bmi+bonemed_fu+height:bonemed_fu+bonemed:bmi,
                  data = training,
@@ -1040,91 +885,74 @@ complex.cv <- train(fracture~age+priorfrac+height+momfrac+bonemed+bmi+bonemed_fu
                  method = "glm",
                  family = "binomial",
                  metric = "logLoss")
-
 summary(complex.cv)
-
 # make preds on the probabilty of each class in TRANING data
 complexcv.predprob <- predict(complex.cv, test, type = "prob")
-
 # compute the ROC curve
 complexcv.roc <- roc(response = test$fracture, predictor = complexcv.predprob$Yes, levels = c("Yes","No"))
-
 # plot ROC curve
 plot(complexcv.roc, print.thres = "best", print.thres.best.method = "closest.topleft", col = "red")
-
 # add legend to plot
 legend("bottomright",
        legend = 'caret model',
        col = "red",
        lwd = 4, cex = 1, xpd = T, horiz = F)
-
 # printing out all AIC metrics (note they are based on training data not test data)
 cat("\nbase.adj Model (Additive):", base.aic,
     "\nRed Model (Additive):", red.aic,
     "\nComplex Model:", complex.aic)
-
 # get coord (threshold)
 coords <- coords(complexcv.roc, "best", best.method = "closest.topleft", ret = "threshold")
-
 # get optimal threshold
 threshold <- coords[[1]] # currently this is 0.25653
-
 # make changes to threshold if desired
 adj.threshold <- threshold + 0
-
 # adjust the labeling by the desired threshold
 pred_label <- as.factor(ifelse(complexcv.predprob$Yes >= adj.threshold, "Yes","No"))
-
 # print confusion matrix
 (cm3 <-confusionMatrix(pred_label, test$fracture, positive = "Yes"))
-
 cat("\nSensitivity:", cm3$byClass[1],
     "\nSpecificity:", cm3$byClass[2],
     "\nPrevalence:", cm3$byClass[8],
     "\nPositive Predicitve Value:", cm3$byClass[3],
     "\nNegative Predicive Value:",cm3$byClass[4],
     "\nAUROC:", complexcv.roc$auc)
-
-
-
 ```
 
-# GLM-NET Process
+<br>
+<br>
+
+## GLM-NET Simple Model
+<hr>
+
 ```{r, message=F, warning=F, fig.align='center'}
 colnames(training)
 glm.df <- training[,-c(1:3,8,20)]
 set.seed(12)
-
 fitControl<- trainControl(method = "repeatedcv", number = 5, repeats = 1)
-
 glm.fit <- train(fracture~.,
                  data = glm.df,
                  method = "glmnet",
                  trControl = fitControl)
-
 glm.fit
-
 plot(glm.fit)
-
 opt.pen<- glm.fit$finalModel$lambdaOpt
-
 coef(glm.fit$finalModel, opt.pen)
-
 ```
 
-# GLM-NET Additive Model:
+<br>
+<br>
+
+## GLM-NET Additive Model
+<hr>
 
   - Using Feats from the code above we will fit the GLM model below. 
 
 ```{r, message=F, warning=F, fig.align='center'}
-
 # parameters for train function
 fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, classProbs = T, summaryFunction = mnLogLoss)
-
 # set seed for reproduceability 
 set.seed(12)
-
-
 # training CARET mult. logi. regression model 
 red.glm <- train(fracture~priorfrac+momfrac+raterisk+fracscore+bonemed_fu+bmi.cat,
                  data = training,
@@ -1132,15 +960,11 @@ red.glm <- train(fracture~priorfrac+momfrac+raterisk+fracscore+bonemed_fu+bmi.ca
                  method = "glm",
                  family = "binomial",
                  metric = "logLoss")
-
 summary(red.glm)
-
 # make preds on the probabilty of each class in TRANING data
 glm.predprob <- predict(red.glm, test, type = "prob")
-
 # compute the ROC curve
 glm.roc <- roc(response = test$fracture, predictor = glm.predprob$Yes, levels = c("Yes","No"))
-
 # plot ROC curve
 plot(glm.roc, print.thres = "best", print.thres.best.method = "closest.topleft", col = "red")
 # add legend to plot
@@ -1148,54 +972,44 @@ legend("bottomright",
        legend = 'caret model',
        col = "red",
        lwd = 4, cex = 1, xpd = T, horiz = F)
-
 # fitting model for AIC below
 red.glm <- glm(fracture~priorfrac+momfrac+raterisk+fracscore+bonemed_fu+bmi.cat,
                  data = training,family = "binomial")
-
 red.glm.aic<-AIC(red.glm)
-
 # printing out all AIC metrics (note they are based on training data not test data)
 cat("\nbase.adj Model (Additive):", base.aic,
     "\nRed Model (Additive):", red.aic,
     "\nComplex Model:", complex.aic,
     "\nRed.GLM Model(additive):", red.glm.aic)
-
 # get coord (threshold)
 coords <- coords(glm.roc, "best", best.method = "closest.topleft", ret = "threshold")
-
 # get optimal threshold
 threshold <- coords[[1]] # currently this is 0.25653
-
 # make changes to threshold if desired
 adj.threshold <- threshold + 0
-
 # adjust the labeling by the desired threshold
 pred_label <- as.factor(ifelse(glm.predprob$Yes >= adj.threshold, "Yes","No"))
-
 # print confusion matrix
 (cm4 <- confusionMatrix(pred_label, test$fracture, positive = "Yes"))
-
-
 cat("\nSensitivity:", cm4$byClass[1],
     "\nSpecificity:", cm4$byClass[2],
     "\nPrevalence:", cm4$byClass[8],
     "\nPositive Predicitve Value:", cm4$byClass[3],
     "\nNegative Predicive Value:",cm4$byClass[4],
     "\nAUROC:", glm.roc$auc)
-
-
 ```
 
-# Complex GLM model 
+<br>
+<br>
+
+## GLM-NET Complex Model
+<hr>
+
 ```{r, message=F, warning=F, fig.align='center'}
 # parameters for train function
 fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, classProbs = T, summaryFunction = mnLogLoss)
-
 # set seed for reproduceability 
 set.seed(12)
-
-
 # training CARET mult. logi. regression model 
 complex.glm <- train(fracture ~ site_id + priorfrac + momfrac + raterisk + fracscore + bonemed_fu + bmi.cat +
                        bonemed_fu:bmi.cat,
@@ -1204,84 +1018,65 @@ complex.glm <- train(fracture ~ site_id + priorfrac + momfrac + raterisk + fracs
                      method = "glm",
                      family = "binomial",
                      metric = "logLoss")
-
 summary(complex.glm)
-
-
 # make preds on the probabilty of each class in TRANING data
 complex.glm.predprob <- predict(complex.glm, test, type = "prob")
-
 # compute the ROC curve
 complex.glm.roc <- roc(response = test$fracture, predictor = complex.glm.predprob$Yes, levels = c("Yes","No"))
-
 # plot ROC curve
 plot(complex.glm.roc, print.thres = "best", print.thres.best.method = "closest.topleft", col = "red")
-
 # add legend to plot
 legend("bottomright",
        legend = 'GLM Complex',
        col = "red",
        lwd = 4, cex = 1, xpd = T, horiz = F)
-
 complex.glm <- glm(fracture ~ priorfrac + momfrac + raterisk + fracscore + bonemed_fu + bmi.cat +
                        bonemed_fu:bmi.cat,
                  data = training,family = "binomial")
-
 # AIC
 complex.glm.aic<-AIC(complex.glm)
-
 # printing out all AIC metrics (note they are based on training data not test data)
 cat("\nbase.adj Model (Additive):", base.aic,
     "\nRed Model (Additive):", red.aic,
     "\nComplex Model:", complex.aic,
     "\nRed.GLM Model(additive):", red.glm.aic,
     "\nComplex.GLM:",complex.glm.aic)
-
 # get coord (threshold)
 coords <- coords(complexcv.roc, "best", best.method = "closest.topleft", ret = "threshold")
-
 # get optimal threshold
 threshold <- coords[[1]] # currently this is 0.25653
-
 # make changes to threshold if desired
 adj.threshold <- threshold + 0
-
 # adjust the labeling by the desired threshold
 pred_label <- as.factor(ifelse(complexcv.predprob$Yes >= adj.threshold, "Yes","No"))
-
 # print confusion matrix
 (cm5 <- confusionMatrix(pred_label, test$fracture, positive = "Yes"))
-
-
 cat("\nSensitivity:", cm5$byClass[1],
     "\nSpecificity:", cm5$byClass[2],
     "\nPrevalence:", cm5$byClass[8],
     "\nPositive Predicitve Value:", cm5$byClass[3],
     "\nNegative Predicive Value:",cm5$byClass[4],
     "\nAUROC:", complex.glm.roc$auc)
-
 ```
 
-# KNN - Non-parametric model
+<br>
+<br>
+
+## KNN - Non-Parametric Model
+<hr>
+
 ```{r, message=F, warning=F, fig.align='center'}
 knn.df <- training[,-c(1)]
-
 fitControl <- trainControl(method = "repeatedcv",number = 5, repeats = 1, classProbs = T, summaryFunction = mnLogLoss)
-
 set.seed(12)
-
 knn.model <- train(fracture~ .,
                    method = "knn",
                    data = knn.df,
                    trControl = fitControl,
                    metric = "logLoss")
-
 preds <- predict(knn.model, test, type ="prob")[,"Yes"]
-
 knn.roc <- roc(response = test$fracture, predictor = preds, levels = c("Yes","No"))
-
 plot(knn.roc,print.thres = "best", print.thres.best.method = "closest.topleft", col = "purple")
-
 plot(complexcv.roc, print.thres = "best", print.thres.best.method = "closest.topleft", col = "lightblue")
 plot(glm.roc, print.thres = "best", print.thres.best.method = "closest.topleft", col = "black", add = T)
 plot(complex.glm.roc, print.thres = "best", print.thres.best.method = "closest.topleft", col = "red", add = T)
@@ -1291,71 +1086,58 @@ legend("bottomright",
        legend = c("Complex","GLM Additive",'GLM Complex', "KNN"),
        col = c("lightblue","black","red","purple"),
        lwd = 4, cex = 1, xpd = T, horiz = F)
-
-
 # coords(complexcv.roc, "best", ret = c("threshold", "specificity", "sens"), transpose = F)
 # coords(glm.roc, "best", ret = c("threshold","specificity","sens"), transpose = F)
 # coords(complex.glm.roc, "best", ret = c("threshold","specificity","sens"), transpose=F)
-
 threshold = .5
 knn.preds <- factor(ifelse(preds > threshold, "Yes","No"))
-
 (cm6 <- confusionMatrix(data = knn.preds, reference = as.factor(test$fracture), positive = "Yes"))
-
-
 cat("\nSensitivity:", cm6$byClass[1],
     "\nSpecificity:", cm6$byClass[2],
     "\nPrevalence:", cm6$byClass[8],
     "\nPositive Predicitve Value:", cm6$byClass[3],
     "\nNegative Predicive Value:",cm6$byClass[4],
     "\nAUROC:", knn.roc$auc)
-
-
 ```
 
+<br>
+<br>
 
-# LASSO Process
+## LASSO Simple Model
+<hr>
+
 ```{r, message=F, warning=F, fig.align='center'}
-
 set.seed(12)
-
 fitControl<- trainControl(method = "repeatedcv", number = 5, repeats = 1)
-
 lambda_values <- seq(0,.03,by = .001)
-
 lasso.fit <- train(fracture ~ .,
                  data = adj.training,
                  method = "glmnet",
                  trControl = fitControl,
                  tuneGrid = expand.grid(data.frame(alpha = 1, lambda = lambda_values)))
-
 lasso.fit
-
 plot(lasso.fit)
-
 opt.pen<- lasso.fit$finalModel$lambdaOpt
-
 coef(lasso.fit$finalModel, opt.pen)
-
 ```
-# LASSO Additive Model
-```{r}
 
+<br>
+<br>
+
+## LASSO Additive Model
+<hr>
+
+```{r}
 lasso.model <- glm(fracture ~ priorfrac+ raterisk + bonemed_fu + fracscore + bmi.cat,
                    data = training,
                    family = "binomial")
-
 summary(lasso.model)
-
 # checking for multicollinearity issues. 
 vif(lasso.model) #no issues present
-
 # parameters for train function
 fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, classProbs = T, summaryFunction = mnLogLoss)
-
 # set seed for reproduceability 
 set.seed(12)
-
 # training CARET mult. logi. regression model 
 lasso.model.cv <- train(fracture ~ priorfrac+ raterisk + bonemed_fu + momfrac + fracscore + bmi.cat,
                  data = training,
@@ -1363,20 +1145,14 @@ lasso.model.cv <- train(fracture ~ priorfrac+ raterisk + bonemed_fu + momfrac + 
                  method = "glm",
                  family = "binomial",
                  metric = "logLoss")
-
 #summary(base.adjust.cv)
-
 base.aic <- AIC(lasso.model) # 381.87
-
 # make preds on the probabilty of each class in TRANING data
 add.model.predprob <- predict(lasso.model.cv,test, type = "prob")
-
 # compute the ROC curve
 add.model.roc <- roc(response = test$fracture, predictor = add.model.predprob$Yes, levels = c("Yes","No"))
-
 # optimal threshold
 optimal.threshold <- coords(add.model.roc, "best")
-
 # plot ROC curve
 plot(add.model.roc, print.thres = "best",
      #print.thres.best.method = "closest.topleft",
@@ -1386,28 +1162,21 @@ legend("bottomright",
        legend = 'Additive model',
        col = "red",
        lwd = 4, cex = 1, xpd = T, horiz = F)
-
 text(x = optimal.threshold[1], y = optimal.threshold[2], 
      labels = paste("Optimal Threshold =", round(optimal.threshold[1], 2)), 
      pos = 3)
-
 # get coord (threshold)
 coords <- coords(add.model.roc, "best",
                  #best.method = "closest.topleft",
                  ret = "threshold")
-
 # get optimal threshold
 threshold <- coords[[1]] # currently this is 0.3003923
-
 # make changes to threshold if desired
 adj.threshold <- threshold + .4 # lower increases sensitivity 
-
 # adjust the labeling by the desired threshold
 pred_label <- as.factor(ifelse(add.model.predprob$Yes > adj.threshold, "Yes","No"))
-
 # print confusion matrix
 (cm1 <- confusionMatrix(pred_label, test$fracture, positive = "Yes"))
-
 cat("\nSensitivity:", cm1$byClass[1],
     "\nSpecificity:", cm1$byClass[2],
     "\nPrevalence:", cm1$byClass[8],
@@ -1416,52 +1185,45 @@ cat("\nSensitivity:", cm1$byClass[1],
     "\nAUROC:", add.model.roc$auc)
 ```
 
+<br>
+<br>
 
-# LDA/QDA Assumption Checking 
+## LDA/QDA Models
+<hr>
 
-  - The assumptions don't look adequate for LDA/QDA model?
+  - The assumptions don't look adequate for LDA/QDA model.
   - Non-parametric (KNN) would be more adequate? 
 
 ```{r, message=F, warning=F, fig.align='center'}
-
 ggpairs(num.df)
-
 colnames(num.df)
-
 num.df %>% ggplot(aes(x =age,y = weight, color = as.factor(fracture.num))) + 
   geom_point()+geom_density_2d()
-
 num.df %>% ggplot(aes(x = age, y = height, color = as.factor(fracture.num)))+
   geom_point() + geom_density_2d()
-
 num.df %>% ggplot(aes(x = age, y = bmi, color = as.factor(fracture.num)))+
   geom_point() + geom_density_2d()
-
 num.df %>% ggplot(aes(x = age, y = fracscore, color = as.factor(fracture.num)))+
   geom_point() + geom_density_2d()
-
 num.df %>% ggplot(aes(x = weight, y = height, color = as.factor(fracture.num)))+
   geom_point() + geom_density_2d()
-
 num.df %>% ggplot(aes(x = bmi, y = height, color = as.factor(fracture.num)))+
   geom_point() + geom_density_2d()
-
 num.df %>% ggplot(aes(x = fracscore, y = height, color = as.factor(fracture.num)))+
   geom_point() + geom_density_2d()
-
 num.df %>% ggplot(aes(x = bmi, y = weight, color = as.factor(fracture.num)))+
   geom_point() + geom_density_2d()
-
 num.df %>% ggplot(aes(x = bmi, y = fracscore, color = as.factor(fracture.num)))+
   geom_point() + geom_density_2d()
-
-
-
 ```
 
-# QDA Model Additive
-```{r, message=F, warning=F, fig.align='center'}
+<br>
+<br>
 
+## QDA Model Additive
+<hr>
+
+```{r, message=F, warning=F, fig.align='center'}
 fitControl <- trainControl(method="repeatedcv",
                            number=5,
                            repeats=1,
@@ -1473,18 +1235,12 @@ qda.fit <- train(fracture~age+weight+height+bmi+fracscore,
                  method = "qda",
                  trControl = fitControl,
                  metric = "logLoss")
-
 predictions <- predict(qda.fit, test, type = "prob")[,"Yes"]
-
 threshold = .258
 class_pred = as.factor(ifelse(predictions > threshold, "Yes","No"))
-
 (cm7<-confusionMatrix(data = class_pred, reference = test$fracture, positive = "Yes"))
-
 qda.roc <- roc(response = test$fracture, predictor = predictions, levels = c("Yes","No"))
-
 plot(qda.roc, print.thres = "best", col = "lightblue")
-
 cat("\nSensitivity:", cm7$byClass[1],
     "\nSpecificity:", cm7$byClass[2],
     "\nPrevalence:", cm7$byClass[8],
@@ -1502,5 +1258,4 @@ cat("\nSensitivity:", cm7$byClass[1],
 #      "\nComplex GLM Model PPV:","\n", cm5$byClass[3],"\n",
 #      "\nKNN Model PPV:","\n", cm6$byClass[3],"\n",
 #      "\nQDA Model PPV:","\n", cm7$byClass[3])
-
 ```
