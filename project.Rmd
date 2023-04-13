@@ -1,16 +1,41 @@
 ---
+title: "STAT Project #2"
+author: 'Joey Hernandez | Krithika Kondakindi | Santiago Gutiérrez<br><br><br>'
 always_allow_html: TRUE
 output: 
   html_document: 
     code_folding: hide
+    toc: yes
+    toc_depth: 2
+    number_sections: no
+    theme: spacelab
+    highlight: tango
   github_document: default
 ---
+<style>
+.title {
+  text-align: center;
+  font-weight: bold;
+}
+.author {
+  text-align: center;
+}
+h1 {
+  text-align: center;
+  font-size: 36px;
+}
+</style>
+
+<br>
 
 <hr>
-<center><h2>Project 2</h2></center>
+# Packages, Data, and EDA
 <hr>
 
-# Loading Initial Packages For Cleaning:
+<br>
+<br>
+
+## Loading Initial Packages For Cleaning
 <hr>
 ```{r, message=F, warning=F, fig.align='center'}
 #install.packages('janitor')
@@ -22,8 +47,7 @@ library(janitor) # tools for cleaning
 library(visdat) # visualize our missing data
 ```
 
-<hr>
-# Data Inspection
+## Data Inspection
 <hr>
 
 Takeaways: 
@@ -60,12 +84,16 @@ df <- glow_bonemed
 #summary(df)
 ```
 
+<br>
+
 <hr>
-<center><h2>EDA</h2></center>
+# EDA
 <hr>
 
+<br>
 
-# EDA - Categorical
+## EDA (Categorical)
+<hr>
 Step one: Visualize what the Yes/Nos look like in terms of fractures. 
   
   - The plot below will show us without yet incorporating predictors, what is the percentages of yes/no that we are seeing in the data. 
@@ -322,8 +350,29 @@ p10<- ggplot(c10[c(2,3,5,8),], aes(x = reorder(bmi.cat, -perc), y = perc, colour
 ```
 
 
+<br>
+
+## Visualizing Categorical Plots
 <hr>
-# Visualizing "Important" Categorical Predictors
+
+```{r, message=F, warning=F, fig.align='center'}
+
+grid.arrange(p,p1,p2,p3,p4,
+             heights = c(1,1))
+
+grid.arrange(p5,p6,p7,p8,p9,p10,
+             heights= c(1,1),
+             widths = c(1,1,1.6))
+
+```
+
+<br>
+<br>
+
+## Visualizing "Important" Categorical Predictors
+
+
+
 <hr>
 
 ```{r, message=F, warning=F, fig.align='center'}
@@ -336,9 +385,7 @@ grid.arrange(p5,p7,p10,
 ```
 
 
-
-<hr>
-# EDA - Numerical
+## EDA (Numerical)
 <hr>
 
 We would like to look at some of the relationships for the numerical categories in our data. 
@@ -418,13 +465,19 @@ lp6 <- df %>% ggplot(aes(x = bmi, fracture.num)) +
 
 ```
 
+<br>
 
-# Numerical Plots
+## Numerical Plots
+<hr>
 ```{r, message=F, warning=F, fig.align='center'}
 grid.arrange(lp,lp1,lp2,ncol(2) )
 grid.arrange(lp3,lp4,lp5,lp6,
              heights = c(1,1))
 ```
+
+
+<br>
+<br>
 
 ```{r}
 df %>% ggplot(aes(x = sub_id, y = fracture, color = fracture))+
@@ -477,6 +530,9 @@ ggcorrplot(cor.data, outline.color = "black", lab = TRUE, title = 'Fracture Corr
 # Test/Validation Split
   - Becuase we have such a small dataset we will use a training size of 70% and test split of 30%. This is some what of a more aggressive split but should help to ensure we have an adequate amount of testing data. 
 
+
+## Test/Validation Split
+<hr>
 ```{r, message=F, warning=F, fig.align='center'}
 library(caret)
 set.seed(12)
@@ -491,11 +547,21 @@ test <- df[-trainIndex,]
 
 ```
 
+<br>
+<br>
+
 <hr>
 # Objective 1
 <hr>
 
-<h4>Fit Logistic Regression Model:</h4>
+
+<br>
+
+## Fit Logistic Regression Model
+<hr>
+
+
+
 
   - Note that the coefficients are LOG-ODDS and not ratios.. to obtain ratios we must exp(coef)
 
@@ -714,11 +780,16 @@ plot_model(red.model, type = "pred", terms = c("armassist","bonemed_fu"))
 
 ```
 
-<hr>
-# ROC Curve for Additive Model
+<br>
+<br>
+
+## ROC Curve for Additive Models
 <hr>
 
-<h4>Caret CV. base.adj Model & ROC</h4>
+
+Multiple Logistic Regression: "Simple" Model
+
+
 ```{r, message=F, warning=F, fig.align='center'}
 library(pROC)
 
@@ -790,9 +861,12 @@ cat("\nSensitivity:", cm1$byClass[1],
 
 ```
 
+<br>
+<br>
 
 
-<h4>Caret CV. Red.model & ROC</h4>
+Caret CV. Model ROC
+
 ```{r, message=F, warning=F, fig.align='center'}
 # parameters for train function
 fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, classProbs = T, summaryFunction = mnLogLoss)
@@ -857,15 +931,21 @@ cat("\nSensitivity:", cm2$byClass[1],
 ```
 
 
+<br>
+<br>
 
 
 <hr>
 # Objective 2
 <hr>
 
-# Interaction Investigation Objective 2
 
-<h4> Investigating potential for interactions </h4>
+<br>
+
+## Investigating Potential for Interactions
+<hr>
+
+
 ```{r, message=F, warning=F, fig.align='center'}
 # age | bmi.cat 
 df %>% ggplot(aes(x = age, y = fracture.num, color = bmi.cat)) +
