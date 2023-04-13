@@ -1239,6 +1239,7 @@ plot_model(red.model, type = "pred", terms = c("armassist","bonemed_fu"))
 
 <img src="project_files/figure-gfm/unnamed-chunk-33-4.png" style="display: block; margin: auto;" />
 
+\<\<\<\<\<\<\< HEAD
 <hr>
 
 # ROC Curve for Final Additive Model
@@ -1247,6 +1248,16 @@ plot_model(red.model, type = "pred", terms = c("armassist","bonemed_fu"))
 <h4>
 Cross Validation & ROC Curve for Final Additive Model
 </h4>
+
+======= <br> <br>
+
+## ROC Curve for Additive Models
+
+<hr>
+
+Multiple Logistic Regression: “Simple” Model
+
+> > > > > > > b01a00f20f42e4b0be06d9b9676c38a638408fd6
 
 ``` r
 library(pROC)
@@ -1393,9 +1404,14 @@ cat("\nSensitivity:", cm1$byClass[1],
 
 <br> <br>
 
+\<\<\<\<\<\<\< HEAD
 <h4>
 Second Additive Model for Comparison
 </h4>
+
+======= Caret CV. Model ROC
+
+> > > > > > > b01a00f20f42e4b0be06d9b9676c38a638408fd6
 
 ``` r
 # parameters for train function
@@ -1495,7 +1511,8 @@ pred_label <- as.factor(ifelse(add.model.predprob$Yes > adj.threshold, "Yes","No
 
 <hr>
 
-# Interaction EDA - Objective 2
+\<\<\<\<\<\<\< HEAD \# Interaction EDA - Objective 2 =======
+\>\>\>\>\>\>\> b01a00f20f42e4b0be06d9b9676c38a638408fd6
 
 <br>
 
