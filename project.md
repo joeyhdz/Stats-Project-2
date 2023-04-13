@@ -1,13 +1,32 @@
+STAT Project \#2
+================
+Joey Hernandez \| Krithika Kondakindi \| Santiago Gutiérrez<br><br><br>
+
+<style>
+.title {
+  text-align: center;
+  font-weight: bold;
+}
+.author {
+  text-align: center;
+}
+h1 {
+  text-align: center;
+  font-size: 36px;
+}
+</style>
+
+<br>
 
 <hr>
-<center>
-<h2>
-Project 2
-</h2>
-</center>
+
+# Packages, Data, and EDA
+
 <hr>
 
-# Loading Initial Packages For Cleaning:
+<br> <br>
+
+## Loading Initial Packages For Cleaning
 
 <hr>
 
@@ -21,9 +40,7 @@ library(janitor) # tools for cleaning
 library(visdat) # visualize our missing data
 ```
 
-<hr>
-
-# Data Inspection
+## Data Inspection
 
 <hr>
 
@@ -67,15 +84,19 @@ df <- glow_bonemed
 #summary(df)
 ```
 
-<hr>
-<center>
-<h2>
-EDA
-</h2>
-</center>
+<br>
+
 <hr>
 
-# EDA - Categorical
+# EDA
+
+<hr>
+
+<br>
+
+## EDA (Categorical)
+
+<hr>
 
 Step one: Visualize what the Yes/Nos look like in terms of fractures.
 
@@ -358,9 +379,9 @@ p10<- ggplot(c10[c(2,3,5,8),], aes(x = reorder(bmi.cat, -perc), y = perc, colour
   geom_text(aes(label = paste0(perc *100, "%")), vjust = 1, size = 4, color = 'black')
 ```
 
-<hr>
+<br>
 
-# Visualizing “Important” Categorical Predictors
+## Visualizing Categorical Plots
 
 <hr>
 
@@ -372,16 +393,35 @@ grid.arrange(p,p1,p2,p3,p4,
 <img src="project_files/figure-gfm/unnamed-chunk-14-1.png" style="display: block; margin: auto;" />
 
 ``` r
-grid.arrange(p5,p7,p10,
-             heights = c(1,1),
+grid.arrange(p5,p6,p7,p8,p9,p10,
+             heights= c(1,1),
              widths = c(1,1,1.6))
 ```
 
 <img src="project_files/figure-gfm/unnamed-chunk-14-2.png" style="display: block; margin: auto;" />
 
+<br> <br>
+
+## Visualizing “Important” Categorical Predictors
+
 <hr>
 
-# EDA - Numerical
+``` r
+grid.arrange(p,p1,p2,p3,p4,
+             heights = c(1,1))
+```
+
+<img src="project_files/figure-gfm/unnamed-chunk-15-1.png" style="display: block; margin: auto;" />
+
+``` r
+grid.arrange(p5,p7,p10,
+             heights = c(1,1),
+             widths = c(1,1,1.6))
+```
+
+<img src="project_files/figure-gfm/unnamed-chunk-15-2.png" style="display: block; margin: auto;" />
+
+## EDA (Numerical)
 
 <hr>
 
@@ -472,41 +512,47 @@ lp6 <- df %>% ggplot(aes(x = bmi, fracture.num)) +
   geom_smooth(method = 'loess', size = 1) + ylim(-.2,1.2) + ggtitle("Loess: BMI")
 ```
 
-# Numerical Plots
+<br>
+
+## Numerical Plots
+
+<hr>
 
 ``` r
 grid.arrange(lp,lp1,lp2,ncol(2) )
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-23-1.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-24-1.png" style="display: block; margin: auto;" />
 
 ``` r
 grid.arrange(lp3,lp4,lp5,lp6,
              heights = c(1,1))
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-23-2.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-24-2.png" style="display: block; margin: auto;" />
+
+<br> <br>
 
 ``` r
 df %>% ggplot(aes(x = sub_id, y = fracture, color = fracture))+
   geom_point(show.legend = F)+ xlab("Identification Code") + ylab("Fracture")
 ```
 
-![](project_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+![](project_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
 
 ``` r
 df %>% ggplot(aes(x = site_id, y = fracture, color = fracture))+
   geom_point(show.legend = F)+ xlab("Identification Code") + ylab("Fracture")
 ```
 
-![](project_files/figure-gfm/unnamed-chunk-24-2.png)<!-- -->
+![](project_files/figure-gfm/unnamed-chunk-25-2.png)<!-- -->
 
 ``` r
 df %>% ggplot(aes(x = bmi, y = fracture, color = fracture)) + 
   geom_point(show.legend = F)
 ```
 
-![](project_files/figure-gfm/unnamed-chunk-24-3.png)<!-- -->
+![](project_files/figure-gfm/unnamed-chunk-25-3.png)<!-- -->
 
 # Extra EDA
 
@@ -530,7 +576,7 @@ num.df <- num.df %>% select(where(is.numeric))
 ggpairs(num.df, ggplot2::aes(color = as.factor(fracture.num)))
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-25-1.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-26-1.png" style="display: block; margin: auto;" />
 
 ``` r
 # remove irrelevant columns
@@ -545,7 +591,7 @@ cor.data <- cor(num.df.adj)
 ggcorrplot(cor.data, outline.color = "black", lab = TRUE, title = 'Fracture Correlation Plot')
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-25-2.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-26-2.png" style="display: block; margin: auto;" />
 
 # Test/Validation Split
 
@@ -553,6 +599,10 @@ ggcorrplot(cor.data, outline.color = "black", lab = TRUE, title = 'Fracture Corr
   70% and test split of 30%. This is some what of a more aggressive
   split but should help to ensure we have an adequate amount of testing
   data.
+
+## Test/Validation Split
+
+<hr>
 
 ``` r
 library(caret)
@@ -567,14 +617,19 @@ test <- df[-trainIndex,]
 #nrow(test)
 ```
 
+<br> <br>
+
 <hr>
 
 # Objective 1
 
 <hr>
-<h4>
-Fit Logistic Regression Model:
-</h4>
+
+<br>
+
+## Fit Logistic Regression Model
+
+<hr>
 
 - Note that the coefficients are LOG-ODDS and not ratios.. to obtain
   ratios we must exp(coef)
@@ -1124,25 +1179,25 @@ library(effects)
 plot_model(red.model, type = "pred", terms = "armassist")
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-31-1.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-32-1.png" style="display: block; margin: auto;" />
 
 ``` r
 plot_model(red.model, type = "pred", terms= "bonemed_fu")
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-31-2.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-32-2.png" style="display: block; margin: auto;" />
 
 ``` r
 plot_model(red.model, type = "pred", terms = "bonemed")
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-31-3.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-32-3.png" style="display: block; margin: auto;" />
 
 ``` r
 plot_model(red.model, type = "pred",terms = "age")
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-31-4.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-32-4.png" style="display: block; margin: auto;" />
 
 ``` r
 # identifies all of the high-order terms in a model and returns a list of "eff" or "effpoly" objects.
@@ -1152,7 +1207,7 @@ all.effects <- allEffects(red.model)
 plot(all.effects,multiline=T)
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-31-5.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-32-5.png" style="display: block; margin: auto;" />
 
 Effect Plot Combo:
 
@@ -1164,25 +1219,25 @@ Effect Plot Combo:
 plot_model(red.model, type = "pred", terms = c("bonemed","armassist"))
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-32-1.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-33-1.png" style="display: block; margin: auto;" />
 
 ``` r
 plot_model(red.model, type ="pred", terms = c("age","bonemed_fu"))
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-32-2.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-33-2.png" style="display: block; margin: auto;" />
 
 ``` r
 plot_model(red.model, type = "pred", terms = c("age","armassist"))
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-32-3.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-33-3.png" style="display: block; margin: auto;" />
 
 ``` r
 plot_model(red.model, type = "pred", terms = c("armassist","bonemed_fu"))
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-32-4.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-33-4.png" style="display: block; margin: auto;" />
 
 <hr>
 
@@ -1270,7 +1325,7 @@ text(x = optimal.threshold[1], y = optimal.threshold[2],
      pos = 3)
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-33-1.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-34-1.png" style="display: block; margin: auto;" />
 
 ``` r
 # get coord (threshold)
@@ -1335,6 +1390,8 @@ cat("\nSensitivity:", cm1$byClass[1],
     ## Positive Predicitve Value: 0.5714286 
     ## Negative Predicive Value: 0.8785047 
     ## AUROC: 0.7919884
+
+<br> <br>
 
 <h4>
 Second Additive Model for Comparison
@@ -1430,6 +1487,8 @@ pred_label <- as.factor(ifelse(add.model.predprob$Yes > adj.threshold, "Yes","No
 #     "\nAUROC:", add.model.roc$auc)
 ```
 
+<br> <br>
+
 <hr>
 
 # Objective 2
@@ -1438,9 +1497,11 @@ pred_label <- as.factor(ifelse(add.model.predprob$Yes > adj.threshold, "Yes","No
 
 # Interaction EDA - Objective 2
 
-<h4>
-Investigating potential for interactions
-</h4>
+<br>
+
+## Investigating Potential for Interactions
+
+<hr>
 
 ``` r
 # age | bmi.cat 
@@ -1450,7 +1511,7 @@ df %>% ggplot(aes(x = age, y = fracture.num, color = bmi.cat)) +
   ylim(-.2, 1.2) + facet_wrap(~bmi.cat)
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-35-1.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-36-1.png" style="display: block; margin: auto;" />
 
 ``` r
 # height | bmi.cat
@@ -1460,7 +1521,7 @@ df %>% ggplot(aes(x = height, y = fracture.num, color = bmi.cat)) +
   ylim(-.2, 1.2) + facet_wrap(~bmi.cat)
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-35-2.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-36-2.png" style="display: block; margin: auto;" />
 
 ``` r
 # bmi | fracscore 
@@ -1470,7 +1531,7 @@ df %>% ggplot(aes(x = bmi, y = fracture.num, color = armassist)) +
   ylim(-.2, 1.2) + facet_wrap(~armassist)
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-35-3.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-36-3.png" style="display: block; margin: auto;" />
 
 ``` r
 # bmi | fracscore  
@@ -1480,7 +1541,7 @@ df %>% ggplot(aes(x = bmi, y = fracture.num, color = fracscore)) +
   ylim(-.2, 1.2) + facet_wrap(~fracscore)
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-35-4.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-36-4.png" style="display: block; margin: auto;" />
 
 ``` r
 # height | raterisk  
@@ -1490,7 +1551,7 @@ df %>% ggplot(aes(x = height, y = fracture.num, color = raterisk)) +
   ylim(-.2, 1.2) + facet_wrap(~raterisk)
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-35-5.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-36-5.png" style="display: block; margin: auto;" />
 
 ``` r
 # height | bonemed - potential interaction ?  
@@ -1500,7 +1561,7 @@ df %>% ggplot(aes(x = bmi, y = fracture.num, color = bonemed)) +
   ylim(-.2, 1.2) + facet_wrap(~bonemed) + ylab("Fracture") + xlab("Body Mass Index")
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-35-6.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-36-6.png" style="display: block; margin: auto;" />
 
 ``` r
 df %>% ggplot(aes(x = age, y = fracture.num, color = as.factor(fracscore))) + 
@@ -1508,7 +1569,7 @@ df %>% ggplot(aes(x = age, y = fracture.num, color = as.factor(fracscore))) +
   ylim(-.2,1.2) + facet_wrap(~as.factor(fracscore))
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-35-7.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-36-7.png" style="display: block; margin: auto;" />
 
 ``` r
 df %>% ggplot(aes(x = height, y = fracture.num, color = as.factor(bonemed)))+
@@ -1516,7 +1577,7 @@ df %>% ggplot(aes(x = height, y = fracture.num, color = as.factor(bonemed)))+
   ylim(-.2, 1.2) + facet_wrap(~bonemed) + ylab("Fracture") + xlab("Height in CM")
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-35-8.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-36-8.png" style="display: block; margin: auto;" />
 
 ``` r
 # bmi | priorfrac  
@@ -1526,7 +1587,7 @@ df %>% ggplot(aes(x = bmi, y = fracture.num, color = priorfrac )) +
   ylim(-.2, 1.2) + facet_wrap(~priorfrac)+ ylab("Fracture") + xlab("Body Mass Index")
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-35-9.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-36-9.png" style="display: block; margin: auto;" />
 
 <h4>
 Complex Model (Interactive Model)
@@ -1669,7 +1730,7 @@ legend("bottomright",
        lwd = 4, cex = 1, xpd = T, horiz = F)
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-37-1.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-38-1.png" style="display: block; margin: auto;" />
 
 ``` r
 # printing out all AIC metrics (note they are based on training data not test data)
@@ -1799,7 +1860,7 @@ glm.fit
 plot(glm.fit)
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-38-1.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-39-1.png" style="display: block; margin: auto;" />
 
 ``` r
 opt.pen<- glm.fit$finalModel$lambdaOpt
@@ -1898,7 +1959,7 @@ legend("bottomright",
        lwd = 4, cex = 1, xpd = T, horiz = F)
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-39-1.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-40-1.png" style="display: block; margin: auto;" />
 
 ``` r
 # fitting model for AIC below
@@ -2056,7 +2117,7 @@ legend("bottomright",
        lwd = 4, cex = 1, xpd = T, horiz = F)
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-40-1.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-41-1.png" style="display: block; margin: auto;" />
 
 ``` r
 complex.glm <- glm(fracture ~ priorfrac + momfrac + raterisk + fracscore + bonemed_fu + bmi.cat +
@@ -2165,7 +2226,7 @@ knn.roc <- roc(response = test$fracture, predictor = preds, levels = c("Yes","No
 plot(knn.roc,print.thres = "best", print.thres.best.method = "closest.topleft", col = "purple")
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-41-1.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-42-1.png" style="display: block; margin: auto;" />
 
 ``` r
 plot(complexcv.roc, print.thres = "best", print.thres.best.method = "closest.topleft", col = "lightblue")
@@ -2179,7 +2240,7 @@ legend("bottomright",
        lwd = 4, cex = 1, xpd = T, horiz = F)
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-41-2.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-42-2.png" style="display: block; margin: auto;" />
 
 ``` r
 # coords(complexcv.roc, "best", ret = c("threshold", "specificity", "sens"), transpose = F)
@@ -2307,7 +2368,7 @@ lasso.fit
 plot(lasso.fit)
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-42-1.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-43-1.png" style="display: block; margin: auto;" />
 
 ``` r
 opt.pen<- lasso.fit$finalModel$lambdaOpt
@@ -2439,7 +2500,7 @@ text(x = optimal.threshold[1], y = optimal.threshold[2],
      pos = 3)
 ```
 
-![](project_files/figure-gfm/unnamed-chunk-43-1.png)<!-- -->
+![](project_files/figure-gfm/unnamed-chunk-44-1.png)<!-- -->
 
 ``` r
 # get coord (threshold)
@@ -2514,7 +2575,7 @@ cat("\nSensitivity:", cm1$byClass[1],
 ggpairs(num.df)
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-44-1.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-45-1.png" style="display: block; margin: auto;" />
 
 ``` r
 colnames(num.df)
@@ -2528,63 +2589,63 @@ num.df %>% ggplot(aes(x =age,y = weight, color = as.factor(fracture.num))) +
   geom_point()+geom_density_2d()
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-44-2.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-45-2.png" style="display: block; margin: auto;" />
 
 ``` r
 num.df %>% ggplot(aes(x = age, y = height, color = as.factor(fracture.num)))+
   geom_point() + geom_density_2d()
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-44-3.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-45-3.png" style="display: block; margin: auto;" />
 
 ``` r
 num.df %>% ggplot(aes(x = age, y = bmi, color = as.factor(fracture.num)))+
   geom_point() + geom_density_2d()
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-44-4.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-45-4.png" style="display: block; margin: auto;" />
 
 ``` r
 num.df %>% ggplot(aes(x = age, y = fracscore, color = as.factor(fracture.num)))+
   geom_point() + geom_density_2d()
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-44-5.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-45-5.png" style="display: block; margin: auto;" />
 
 ``` r
 num.df %>% ggplot(aes(x = weight, y = height, color = as.factor(fracture.num)))+
   geom_point() + geom_density_2d()
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-44-6.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-45-6.png" style="display: block; margin: auto;" />
 
 ``` r
 num.df %>% ggplot(aes(x = bmi, y = height, color = as.factor(fracture.num)))+
   geom_point() + geom_density_2d()
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-44-7.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-45-7.png" style="display: block; margin: auto;" />
 
 ``` r
 num.df %>% ggplot(aes(x = fracscore, y = height, color = as.factor(fracture.num)))+
   geom_point() + geom_density_2d()
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-44-8.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-45-8.png" style="display: block; margin: auto;" />
 
 ``` r
 num.df %>% ggplot(aes(x = bmi, y = weight, color = as.factor(fracture.num)))+
   geom_point() + geom_density_2d()
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-44-9.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-45-9.png" style="display: block; margin: auto;" />
 
 ``` r
 num.df %>% ggplot(aes(x = bmi, y = fracscore, color = as.factor(fracture.num)))+
   geom_point() + geom_density_2d()
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-44-10.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-45-10.png" style="display: block; margin: auto;" />
 
 # QDA Model Additive
 
@@ -2643,7 +2704,7 @@ qda.roc <- roc(response = test$fracture, predictor = predictions, levels = c("Ye
 plot(qda.roc, print.thres = "best", col = "lightblue")
 ```
 
-<img src="project_files/figure-gfm/unnamed-chunk-45-1.png" style="display: block; margin: auto;" />
+<img src="project_files/figure-gfm/unnamed-chunk-46-1.png" style="display: block; margin: auto;" />
 
 ``` r
 cat("\nSensitivity:", cm7$byClass[1],
