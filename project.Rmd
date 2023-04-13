@@ -1,9 +1,9 @@
 ---
 always_allow_html: TRUE
 output: 
+  github_document: default
   html_document: 
     code_folding: hide
-  github_document: default
 ---
 
 <hr>
@@ -73,7 +73,7 @@ Step one: Visualize what the Yes/Nos look like in terms of fractures.
   - Findings are that it's not a very balanced split. 75% of the data have NO for fracture.
   when we make predictive probabilities how will this influence the result? will we find that they are around this value with some higher/lower? *potential sanity check to our results later*
   
-  - Additional Note... Unbalanced data is OK.. this should maybe be revisted in our thresholding
+  - Additional Note... Unbalanced data is OK.. this should be revisted in our thresholding
 ```{r, message=F, warning=F, fig.align='center'}
 library(ggplot2)
 library(gridExtra)
@@ -499,24 +499,25 @@ test <- df[-trainIndex,]
 
   - Note that the coefficients are LOG-ODDS and not ratios.. to obtain ratios we must exp(coef)
 
-
-
 <h4>Base Additive Model:</h4>
 
   - To begin we created a model with nearly every predictor so that we could see at a baseline what was significant and what was not (while in the presence of other variables)
   
-  - ANOVA: In the presence of other variables, variables such as priorfrac, age, bmi(right on the cusp of rejection), bonemed, and bonetreat are significant, while weight,height, bonemed_fu, premeno, momfrac, armassist, smoke, fracscore are not significant at the .05 level of significance. 
+  - ANOVA: In the presence of other variables, variables such as priorfrac, age, bmi(right on the cusp of rejection), raterisk(on cusp), and bonetreat are significant, while the other feats. in the model are not significant at the .05 level of significance. 
   
   - The reasoning for keeping bmi in the model is because there is evidence in scientific literature that different classes of BMI tend to have different levels of susceptibility to osteoporosis and thus bone fractures. 
-  - AIC of our base.model is 409.18
   
+  - AIC of our base.model is 393.24 (no)
+
+# Model 1 Additive
 ```{r, message=F, warning=F, fig.align='center'}
 library(ResourceSelection)
 library(car)
 
-# removing sub_id, raterisk, bmi.cat, fracture.num
+# removing sub_id, raterisk, fracture.num
 adj.training <- training[,-c(1,20)]
-colnames(adj.training)
+#colnames(adj.training) #sanity check
+
 base.model <- glm(fracture~., family = "binomial", data = adj.training)
 
 summary(base.model)
@@ -530,13 +531,14 @@ anova(base.model, test = "Chisq")
 
   - Taking what was significant in our first model (base.model) we will now add it to our second model (base.adj) model and compare it's performance to determine which provides a better fit. 
   
-  - base.adj model removes 6 predictors that were in the base.model and yields a slightly improved AIC of 384.73 compared to base.model AIC 387.59.
+  - base.adj model removes 6 predictors that were in the base.model and yields a slightly improved AIC of 383.12 compared to base.model AIC 393.24
 
-  - The p-value from our anova of .1659 > .05 suggests that the difference in deviance between the two models is not statistically significant. This means that we fail to reject the null hypothesis and cannot conclude that Model 1 fits the data significantly better than Model 2, even though it has more predictors. We will proceed with Model 2 (base.adj model)
+  - The p-value from our anova of 0.212 > .05 suggests that the difference in deviance between the two models is not statistically significant. This means that we fail to reject the null hypothesis and cannot conclude that Model 1 fits the data significantly better than Model 2, even though it has more predictors. We will proceed with Model 2 (base.adj model)
 
+# Model 2 Additive
 ```{r}
 
-base.adj <- glm(fracture~priorfrac+age+bmi+raterisk+bonetreat, data = adj.training, family = "binomial")
+base.adj <- glm(fracture~priorfrac+age+bmi+raterisk+bonetreat, data = training, family = "binomial")
 
 summary(base.adj)
 
@@ -550,18 +552,6 @@ anova(base.model,base.adj,test = "Chisq")
 
 
 
-<h4>Base.adj Model Coefficients and CIs:</h4>
-```{r, message=F, warning=F, fig.align='center'}
-# coefficient output for log. reg. model:
-base.coef<- coef(base.adj) # normal coefficient output
-base.coef
-
-base.odd.ratios <- exp(coef(base.adj)) # exp coefficient
-base.odd.ratios
-# confidence intervals
-base.ci <- exp(confint(base.adj, level = .95)) # confidence interval @ .05 significance
-base.ci
-```
 
 
 
@@ -570,6 +560,8 @@ base.ci
   - There are some variables that were not included in the previous two models, but have either shown potential visually, or would make "sense" to have some effect on predicting fractures. These are included here in this simple (additive) model. 
   
   - We will take the same approach and start with this model then investigate it further to determine what is significant or what can be removed. 
+
+# Model 3 Additive  
 ```{r, message=F, warning=F, fig.align='center'}
 
 # fitting an additive multiple logistic regression model
@@ -601,7 +593,8 @@ anova(simple, test = "Chisq")
   - The p-value from our anova of .08925 > .05 suggests that the difference in deviance between the two models is not statistically significant. This means that we fail to reject the null hypothesis and cannot conclude that Base.adj fits the data significantly better than red.model, even though it has more predictors. We will proceed with "red.model" as our "best performing" in terms of ANOVA comparison, but will still reference and use the base.adj model. 
   
   - although the base.adj model doesn't perform as well as the red.model, it's features allow for real world applicability in predicting fractures. While it would be nice for most of the explanation to be summed up and accounted for over 4 variables the human body has many factors that can contribute to bone health such as hormones, lifestyle, activity level, etc. It is for these reasons that we will actually proceed with both models in hand as we look for the appropriate application. 
-  
+
+# Model 4 Additive  
 ```{r, message=F, warning=F, fig.align='center'}
 red.model <- glm(fracture~ armassist+age+bonemed_fu+bonemed,
                  data = training,
@@ -715,10 +708,10 @@ plot_model(red.model, type = "pred", terms = c("armassist","bonemed_fu"))
 ```
 
 <hr>
-# ROC Curve for Additive Model
+# ROC Curve for Final Additive Model
 <hr>
 
-<h4>Caret CV. base.adj Model & ROC</h4>
+<h4>Cross Validation & ROC Curve for Final Additive Model</h4>
 ```{r, message=F, warning=F, fig.align='center'}
 library(pROC)
 
@@ -792,7 +785,7 @@ cat("\nSensitivity:", cm1$byClass[1],
 
 
 
-<h4>Caret CV. Red.model & ROC</h4>
+<h4>Second Additive Model for Comparison</h4>
 ```{r, message=F, warning=F, fig.align='center'}
 # parameters for train function
 fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, classProbs = T, summaryFunction = mnLogLoss)
@@ -822,15 +815,15 @@ add.model.roc <- roc(response = test$fracture, predictor = add.model.predprob$Ye
 optimal.threshold <- coords(add.model.roc, "best")
 
 # plot ROC curve
-plot(add.model.roc, print.thres = "best", print.thres.best.method = "closest.topleft", col = "red")
+#plot(add.model.roc, print.thres = "best", print.thres.best.method = "closest.topleft", col = "red")
 # add legend to plot
-legend("bottomright",
-       legend = 'caret model',
-       col = "red",
-       lwd = 4, cex = 1, xpd = T, horiz = F)
-text(x = optimal.threshold[1], y = optimal.threshold[2], 
-     labels = paste("Optimal Threshold =", round(optimal.threshold[1], 2)), 
-     pos = 1)
+# legend("bottomright",
+#        legend = 'caret model',
+#        col = "red",
+#        lwd = 4, cex = 1, xpd = T, horiz = F)
+# text(x = optimal.threshold[1], y = optimal.threshold[2], 
+#      labels = paste("Optimal Threshold =", round(optimal.threshold[1], 2)), 
+#      pos = 1)
 
 # get coord (threshold)
 coords <- coords(add.model.roc, "best", best.method = "closest.topleft", ret = "threshold")
@@ -845,14 +838,14 @@ adj.threshold <- threshold + 0
 pred_label <- as.factor(ifelse(add.model.predprob$Yes > adj.threshold, "Yes","No"))
 
 # print confusion matrix
-(cm2 <- confusionMatrix(pred_label, test$fracture, positive = "Yes"))
+#(cm2 <- confusionMatrix(pred_label, test$fracture, positive = "Yes"))
 
-cat("\nSensitivity:", cm2$byClass[1],
-    "\nSpecificity:", cm2$byClass[2],
-    "\nPrevalence:", cm2$byClass[8],
-    "\nPositive Predicitve Value:", cm2$byClass[3],
-    "\nNegative Predicive Value:",cm2$byClass[4],
-    "\nAUROC:", add.model.roc$auc)
+# cat("\nSensitivity:", cm2$byClass[1],
+#     "\nSpecificity:", cm2$byClass[2],
+#     "\nPrevalence:", cm2$byClass[8],
+#     "\nPositive Predicitve Value:", cm2$byClass[3],
+#     "\nNegative Predicive Value:",cm2$byClass[4],
+#     "\nAUROC:", add.model.roc$auc)
 
 ```
 
@@ -863,7 +856,7 @@ cat("\nSensitivity:", cm2$byClass[1],
 # Objective 2
 <hr>
 
-# Interaction Investigation Objective 2
+# Interaction EDA - Objective 2
 
 <h4> Investigating potential for interactions </h4>
 ```{r, message=F, warning=F, fig.align='center'}
@@ -934,6 +927,8 @@ df %>% ggplot(aes(x = bmi, y = fracture.num, color = priorfrac )) +
   - Interactions were added one at a time to determine their significance in the model (if they were significant) and how much they helped/hurt the model. 
   
   - if an interaction helped the model and was significant then it was kept, in this case it was height:bonemed_fu and bmi:bonemed. 
+
+# Complex Model 1  
 ```{r, message=F, warning=F, fig.align='center'}
 complex <- glm(fracture~age+priorfrac+height+momfrac+bonemed+bmi+bonemed_fu+
                  height:bonemed_fu+bonemed:bmi,
@@ -1015,8 +1010,7 @@ cat("\nSensitivity:", cm3$byClass[1],
 
 ```
 
-# GLM-NET Model 
-
+# GLM-NET Process
 ```{r, message=F, warning=F, fig.align='center'}
 colnames(training)
 glm.df <- training[,-c(1:3,8,20)]
@@ -1039,7 +1033,8 @@ coef(glm.fit$finalModel, opt.pen)
 
 ```
 
-GLM-NET Feat. Selected Model:
+# GLM-NET Additive Model:
+
   - Using Feats from the code above we will fit the GLM model below. 
 
 ```{r, message=F, warning=F, fig.align='center'}
@@ -1113,7 +1108,7 @@ cat("\nSensitivity:", cm4$byClass[1],
 
 ```
 
-Complex GLM model 
+# Complex GLM model 
 ```{r, message=F, warning=F, fig.align='center'}
 # parameters for train function
 fitControl <- trainControl( method = "repeatedcv", number = 5, repeats = 1, classProbs = T, summaryFunction = mnLogLoss)
@@ -1123,7 +1118,7 @@ set.seed(12)
 
 
 # training CARET mult. logi. regression model 
-complex.glm <- train(fracture ~ priorfrac + momfrac + raterisk + fracscore + bonemed_fu + bmi.cat +
+complex.glm <- train(fracture ~ site_id + priorfrac + momfrac + raterisk + fracscore + bonemed_fu + bmi.cat +
                        bonemed_fu:bmi.cat,
                      data = training,
                      trControl = fitControl,
@@ -1240,8 +1235,7 @@ cat("\nSensitivity:", cm6$byClass[1],
 ```
 
 
-# LASSO Model
-
+# LASSO Process
 ```{r, message=F, warning=F, fig.align='center'}
 
 set.seed(12)
@@ -1251,7 +1245,7 @@ fitControl<- trainControl(method = "repeatedcv", number = 5, repeats = 1)
 lambda_values <- seq(0,.03,by = .001)
 
 lasso.fit <- train(fracture ~ .,
-                 data = glm.df,
+                 data = adj.training,
                  method = "glmnet",
                  trControl = fitControl,
                  tuneGrid = expand.grid(data.frame(alpha = 1, lambda = lambda_values)))
@@ -1266,11 +1260,9 @@ coef(lasso.fit$finalModel, opt.pen)
 
 ```
 # LASSO Additive Model
-
-
 ```{r}
 
-lasso.model <- glm(fracture ~ priorfrac+ raterisk + bonemed_fu + momfrac + fracscore + bmi.cat,
+lasso.model <- glm(fracture ~ priorfrac+ raterisk + bonemed_fu + fracscore + bmi.cat,
                    data = training,
                    family = "binomial")
 
@@ -1346,7 +1338,6 @@ cat("\nSensitivity:", cm1$byClass[1],
 ```
 
 
-
 # LDA/QDA Assumption Checking 
 
   - The assumptions don't look adequate for LDA/QDA model?
@@ -1389,6 +1380,7 @@ num.df %>% ggplot(aes(x = bmi, y = fracscore, color = as.factor(fracture.num)))+
 
 ```
 
+# QDA Model Additive
 ```{r, message=F, warning=F, fig.align='center'}
 
 fitControl <- trainControl(method="repeatedcv",
@@ -1423,13 +1415,13 @@ cat("\nSensitivity:", cm7$byClass[1],
 ```
 
 ```{r, message=F, warning=F, fig.align='center'}
-
-cat ("\nBase Additive Model PPV:","\n", cm1$byClass[3],"\n",
-     "\nReduced Additive Model PPV:","\n", cm2$byClass[3],"\n",
-     "\nComplex Model PPV:","\n", cm3$byClass[3],"\n",
-     "\nGLMNET Model PPV:","\n", cm4$byClass[3],"\n",
-     "\nComplex GLM Model PPV:","\n", cm5$byClass[3],"\n",
-     "\nKNN Model PPV:","\n", cm6$byClass[3],"\n",
-     "\nQDA Model PPV:","\n", cm7$byClass[3])
+# 
+# cat ("\nBase Additive Model PPV:","\n", cm1$byClass[3],"\n",
+#      "\nReduced Additive Model PPV:","\n", cm2$byClass[3],"\n",
+#      "\nComplex Model PPV:","\n", cm3$byClass[3],"\n",
+#      "\nGLMNET Model PPV:","\n", cm4$byClass[3],"\n",
+#      "\nComplex GLM Model PPV:","\n", cm5$byClass[3],"\n",
+#      "\nKNN Model PPV:","\n", cm6$byClass[3],"\n",
+#      "\nQDA Model PPV:","\n", cm7$byClass[3])
 
 ```

@@ -795,6 +795,20 @@ cat("SME Model",
     "\nAUROC:", add.model.roc$auc)
 
 ```
+# Confidence Intervals
+```{r}
+# coefficient output for log. reg. model:
+base.coef<- coef(base.adj) # normal coefficient output
+base.coef
+
+base.odd.ratios <- exp(coef(base.adj)) # exp coefficient
+base.odd.ratios
+# confidence intervals
+base.ci <- exp(confint(base.adj, level = .95)) # confidence interval @ .05 significance
+base.ci
+
+
+```
 #effect plot
 ```{r, message=F, warning=F, fig.align='center'}
 library(sjPlot)
