@@ -6,15 +6,11 @@ output:
   github_document: default
   html_document: 
     code_folding: hide
-<<<<<<< HEAD
-=======
     toc: yes
     toc_depth: 2
     number_sections: no
     theme: spacelab
     highlight: tango
-  github_document: default
->>>>>>> b01a00f20f42e4b0be06d9b9676c38a638408fd6
 ---
 <style>
 .title {
