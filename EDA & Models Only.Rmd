@@ -436,7 +436,7 @@ ggsave("g4.jpg",g4)
 ```
 
 
-# Extra EDA
+# Correlation Plot
 
 <h4>Correlation Plot</h4>
 ```{r, message=F, warning=F, fig.align='center'}
@@ -467,8 +467,9 @@ ggcorrplot(cor.data, outline.color = "black", lab = TRUE, title = 'Fracture Corr
 
 ```
 
-# Test/Validation Split
-  - Becuase we have such a small dataset we will use a training size of 70% and test split of 30%. This is some what of a more aggressive split but should help to ensure we have an adequate amount of testing data. 
+<h4>Test/Validation Split<h4>
+
+  - Because we have such a small dataset we will use a training size of 70% and test split of 30%. This is some what of a more aggressive split but should help to ensure we have an adequate amount of testing data. 
 
 ```{r, message=F, warning=F, fig.align='center'}
 library(caret)
@@ -516,6 +517,7 @@ AIC(base.model)
 ```
 
 
+# GLM PROCESS
 <h4>Penalized Regression Process</h4>
 
   - site_id, priorfrac, momfrac, raterisk, fracscore, bonemed_fu, bmi.cat 
@@ -541,7 +543,7 @@ coef(glm.fit$finalModel, opt.pen)
 
 ```
 
-# GLM Model ADDITIVE
+# GLM ADDITIVE Model 
 
 ```{r}
 library(pROC)
@@ -610,7 +612,7 @@ cat("GLMNET Model",
 
 ```
 
-# LASSO process ADDITIVE
+# LASSO PROCESS
 
   - priorfrac, raterisk, fracscore, bonemed_fu, bmi.cat
 
@@ -640,7 +642,7 @@ coef(lasso.fit$finalModel, opt.pen)
 ```
 
 
-# LASSO model ADDITIVE
+# LASSO ADDITIVE model 
 
 ```{r}
 lasso.model <- glm(fracture ~ priorfrac+ raterisk + bonemed_fu + fracscore + bmi.cat,
@@ -721,7 +723,7 @@ cat("LASSO Model",
 ```
 
 
-# SME Model - Winner 
+# Main Additive Model - Winner 
 
 ```{r}
 # parameters for train function
@@ -809,7 +811,8 @@ base.ci
 
 
 ```
-#effect plot
+
+# Effect plots
 ```{r, message=F, warning=F, fig.align='center'}
 library(sjPlot)
 library(sjmisc)
@@ -826,37 +829,7 @@ plot(all.effects,multiline=T)
 
 ```
 
-
-
-Additive Stats
-```{r}
-cat("GLMNET Model",
-    "\nSensitivity:", cm1$byClass[1],
-    "\nSpecificity:", cm1$byClass[2],
-    "\nPrevalence:", cm1$byClass[8],
-    "\nPositive Predicitve Value:", cm1$byClass[3],
-    "\nNegative Predicive Value:",cm1$byClass[4],
-    "\nAUROC:", glm.roc$auc,"\n")
-
-cat("\nLASSO Model",
-    "\nSensitivity:", cm2$byClass[1],
-    "\nSpecificity:", cm2$byClass[2],
-    "\nPrevalence:", cm2$byClass[8],
-    "\nPositive Predicitve Value:", cm2$byClass[3],
-    "\nNegative Predicive Value:",cm2$byClass[4],
-    "\nAUROC:", add.model.roc$auc,"\n")
-
-cat("\nSME Model",
-    "\nSensitivity:", cm3$byClass[1],
-    "\nSpecificity:", cm3$byClass[2],
-    "\nPrevalence:", cm3$byClass[8],
-    "\nPositive Predicitve Value:", cm3$byClass[3],
-    "\nNegative Predicive Value:",cm3$byClass[4],
-    "\nAUROC:", add.model.roc$auc)
-
-
-```
-
+# OBJECTIVE 2
 
 # KNN - Non-parametric model
 ```{r, message=F, warning=F, fig.align='center'}
@@ -1078,39 +1051,3 @@ legend("bottomright",
 
 ```
 
-# PPV
-```{r}
-cat ("\nAdditive Model PPV:","\n", cm3$byClass[4],"\n",
-     "\nComplex Model PPV:","\n", cm1$byClass[4],"\n",
-     "\nKNN Model:","\n", cm6$byClass[4],"\n",
-     "\nQDA Model PPV:","\n", cm7$byClass[4])
-
-```
-
-
-# PPV
-```{r}
-cat ("\nAdditive Model PPV:","\n", cm3$byClass[3],"\n",
-     "\nComplex Model PPV:","\n", cm1$byClass[3],"\n",
-     "\nKNN Model:","\n", cm6$byClass[3],"\n",
-     "\nQDA Model PPV:","\n", cm7$byClass[3])
-
-```
-
-# AUROC
-```{r}
-cat ("\nAUROC:", add.model.roc$auc,"\n",
-     "\nAUROC:", red.glm.aic,"\n",
-     "\nAUROC:", knn.roc$auc,"\n",
-     "\nAUROC:", qda.roc$auc)
-```
-
-```{r}
-cat ("\nAUROC:", base.aic,"\n",
-     "\nAUROC:", glm.roc$auc,"\n",
-     "\nAUROC:", knn.roc$auc,"\n",
-     "\nAUROC:", qda.roc$auc)
-
-
-
-```
