@@ -20,13 +20,13 @@ h1 {
 
 <hr>
 
-# Packages, Data, and EDA
+# **Packages & Data**
 
 <hr>
 
 <br> <br>
 
-## Loading Initial Packages For Cleaning
+## Load Initial Packages For Cleaning
 
 <hr>
 
@@ -45,19 +45,19 @@ library(visdat) # visualize our missing data
 
 Takeaways:
 
-- Looking at the data we see that some of the weight values(in KG) are
-  very low. assuming the low weight belongs to individuals who are
-  older, maybe bed ridden, and have instances of sarcopenia this is
-  plausible… but also it’s good to keep this in mind moving forward.
+- Looking at the data we see that some of the weight values (in KG) are
+  very low. Assuming the low weight belongs to individuals who are
+  older - maybe bed ridden - and have instances of sarcopenia, this is
+  plausible… but, it’s also good to keep this in mind moving forward.
 
-- raterisk: This is a completely subjective topic. maybe interesting to
-  see, but not expected that this will provide much insight.
+- Raterisk: This is a completely subjective topic. It may be interesting
+  to see, but not expected to provide much insight.
 
 - Duplicate data: There is instances of duplicated data in the site_id,
   phy_id. This makes sense since many sites will occur with repeating
   metrics and many physicians will also occur with those same metrics.
 
-- smoke has a very small sample of “Yes” (35)
+- Smoke has a very small sample of “Yes” (35).
 
 ``` r
 # adding dataset into df call.
@@ -81,7 +81,7 @@ df <- glow_bonemed
 
 <hr>
 
-# EDA
+# **EDA**
 
 <hr>
 
@@ -91,18 +91,19 @@ df <- glow_bonemed
 
 <hr>
 
-Step one: Visualize what the Yes/Nos look like in terms of fractures.
+Step One: Visualize what the Yes/No’s look like in terms of fractures.
 
 - The plot below will show us without yet incorporating predictors, what
   is the percentages of yes/no that we are seeing in the data.
 
 - Findings are that it’s not a very balanced split. 75% of the data have
-  NO for fracture. when we make predictive probabilities how will this
+  NO for fracture. When we make predictive probabilities how will this
   influence the result? will we find that they are around this value
-  with some higher/lower? *potential sanity check to our results later*
+  with some higher/lower? *(potential sanity check to our results
+  later)*
 
-- Additional Note… Unbalanced data is OK.. this should be revisted in
-  our thresholding
+- Additional Note… Unbalanced data is OK.. this should maybe be
+  revisited in our threshold.
 
 ``` r
 library(ggplot2)
@@ -119,15 +120,15 @@ p<- ggplot(c, aes(x = fracture, y = perc, colour = fracture)) +
   geom_text(aes(label = paste0(perc *100, "%")), vjust = 2, size = 5, color = 'black')
 ```
 
-Fracture - Menopause before age 45
+Fracture - Menopause Before Age 45
 
 - When and individual did not have menopause before age 45
   (pre-menopause) the chances of having a fracture are much higher even
   though there is only a 25% of having a fracture.
 
-- If you are in the no premenopause group, it is approx 80% chance that
+- If you are in the no pre-menopause group, it is approx 80% chance that
   you have a fracture. it decreases as for those who did have
-  premenopause.
+  pre-menopause.
 
 ``` r
 c1 <- df %>% 
@@ -143,7 +144,7 @@ p1<- ggplot(c1[c(2,3),], aes(x = reorder(premeno, -perc), y = perc, colour = pre
   geom_text(aes(label = paste0(perc *100, "%")), vjust = 2, size = 5, color = 'black')
 ```
 
-Fracture - momfrac (mother had hip fracture)
+Fracture - Momfrac (Mother Had Hip Fracture)
 
 - When an individual did not have a mother that had a hip fracture the
   chances of having a fracture are much higher (80.8%) even though there
@@ -167,10 +168,10 @@ p2<- ggplot(c2[c(2,3),], aes(x = reorder(momfrac, -perc), y = perc, color = momf
   geom_text(aes(label = paste0(perc * 100, "%")), vjust = 2, size = 5, color = "black")
 ```
 
-Fracture - smoke (current or former smoker)
+Fracture - Smoke (Current / Former Smoker)
 
 - When an individual falls in the category of former/current smoker the
-  chances of having a fracture are much higher(94.4%) even though there
+  chances of having a fracture are much higher (94.4%) even though there
   is only a 25% of having a fracture.
 
 ``` r
@@ -187,9 +188,10 @@ p3<- ggplot(c3[c(1,4),], aes(x = reorder(smoke, -perc), y = perc, color = smoke)
   geom_text(aes(label = paste0(perc * 100, "%")), vjust = 1, size = 5, color = "black")
 ```
 
-fracture - raterisk (self-reported risk of fracture: classified by the
-following groups…less than others of same age, same as others of same
-age, greater than others of same age)
+Fracture - Raterisk (Self-Reported Risk of Fracture)
+
+- Classified by the following groups…less than others of same age, same
+  as others of same age, greater than others of same age).
 
 - An issue with this is that it’s a very subjective measure. WHY are
   they rating this? is it based off non-inclusive criteria that the
@@ -212,10 +214,10 @@ p4<- ggplot(c4[c(1,2,6),], aes(x = reorder(raterisk, -perc), y = perc, color = r
   geom_text(aes(label = paste0(perc * 100, "%")), vjust = 2, size = 4, color = "black")
 ```
 
-fracture - bonemed (bone medications at enrollment)
+Fracture - Bonemed (Bone Medications at Enrollment)
 
 - When an individual is in the category of No medication at enrollment
-  the chances of having a fracture are much higher(63.2%) even though
+  the chances of having a fracture are much higher (63.2%) even though
   there is only a 25% of having a fracture.
 
 ``` r
@@ -232,10 +234,10 @@ p5<- ggplot(c5[c(2,3),], aes(x = reorder(bonemed, -perc), y = perc, color = bone
   geom_text(aes(label = paste0(perc * 100, "%")), vjust = 2, size = 5, color = "black")
 ```
 
-fracture - bonemed_fu (bone medications at follow-up)
+Fracture - Bonemed_fu (Bone Medications at Follow-up)
 
 - When an individual is in the category of No medication at Follow-up
-  the chances of having a fracture are higher(57.6% vs 42.4%) even
+  the chances of having a fracture are higher (57.6% versus 42.4%) even
   though there is only a 25% of having a fracture.
 
 ``` r
@@ -252,11 +254,11 @@ p6<-ggplot(c6[c(2,3),], aes(x = reorder(bonemed_fu, -perc), y = perc, color = bo
   geom_text(aes(label = paste0(perc * 100, "%")), vjust = 2, size = 5, color = "black")
 ```
 
-Fracture - bonetreat (bone medications both at enrollment and follow-up)
+Fracture - Bonetreat (Bone Medications Both at Enrollment & Follow-up)
 
 - When an individual is in the category of No treatment at both
   enrollment and follow-up the chances of having a fracture are much
-  higher(68% vs. 32%) even though there is only a 25% of having a
+  higher (68% versus 32%) even though there is only a 25% of having a
   fracture.
 
 ``` r
@@ -273,12 +275,12 @@ p7<-ggplot(c7[c(2,3),], aes(x = reorder(bonetreat, -perc), y = perc, color = bon
   geom_text(aes(label = paste0(perc * 100, "%")), vjust = 2, size = 5, color = "black")
 ```
 
-Fracture - Arms are needed to stand from a chair
+Fracture - Arms Needed to Stand From a Chair
 
 - Very balanced between the two groups.
 
 - When an individual is in the category of needing assistance to stand
-  the chances of having a fracture are higher(50.4% vs 49.6%) even
+  the chances of having a fracture are higher( 50.4% versus 49.6%) even
   though there is only a 25% of having a fracture.
 
 ``` r
@@ -295,11 +297,11 @@ p8<- ggplot(c8[c(2,3),], aes(x = reorder(armassist, -perc), y = perc, colour = a
   geom_text(aes(label = paste0(perc *100, "%")), vjust = 2, size = 5, color = 'black')
 ```
 
-fracture - priorfrac (history of prior fracture)
+Fracture - Priorfrac (History of Prior Fracture)
 
 - When an individual is in the category of NOT having had a prior
-  fracture the chances of having a fracture are higher(58.4% vs 41.6%)
-  even though there is only a 25% of having a fracture.
+  fracture the chances of having a fracture are higher (58.4% versus
+  41.6%) even though there is only a 25% of having a fracture.
 
 ``` r
 c9 <- df %>% 
@@ -315,20 +317,18 @@ p9<-ggplot(c9[c(2,3),], aes(x = reorder(priorfrac, -perc), y = perc, color = pri
   geom_text(aes(label = paste0(perc * 100, "%")), vjust = 2, size = 5, color = "black")
 ```
 
-Fracture - bmi - body mass index
-
-- Some domain expertise here: there is evidence that individuals who are
-  heavier tend to have less instances of osteoperosis, and hip/bone
-  fractures. this is unsuprising to see here and is a good depiction of
-  prior research.
+Fracture - BMI (Body Mass Index) - Some domain expertise here: there is
+evidence that individuals who are heavier tend to have less instances of
+osteoporosis, and hip/bone fractures. this is unsurprising to see here
+and is a good depiction of prior research.
 
 - Including this variable into the model should be something that is
-  significat based on the trend we see, although the instance of
-  “underwieght” is interesting and may require some investigation.
+  significant based on the trend we see, although the instance of
+  “underweight” is interesting and may require some investigation.
 
 - When an individual is in the category “Healthy Weight” the chances of
   having a fracture are highest (35.2%), followed by Overweight (32.8%),
-  followed by Obesity(30.4%), and lastly Underweight (1.6%).
+  followed by Obesity (30.4%), and lastly Underweight (1.6%).
 
 ``` r
 # transforming numeric into categorical using widley accepted BMI categories
@@ -406,7 +406,7 @@ plot.
   values.
 
 - Note for complex models We can add categorical values to this
-  (interactions) \| also facet wrapping will allow us to view them
+  (interactions). Also, facet wrapping will allow us to view them
   separate.
 
 ``` r
@@ -516,11 +516,11 @@ df %>% ggplot(aes(x = bmi, y = fracture, color = fracture)) +
 
 ![](project_files/figure-gfm/unnamed-chunk-25-3.png)<!-- -->
 
-# Extra EDA
+<br> <br>
 
-<h4>
-Correlation Plot
-</h4>
+## Correlation Plot
+
+<hr>
 
 ``` r
 library(ggcorrplot)
@@ -548,16 +548,15 @@ ggcorrplot(cor.data, outline.color = "black", lab = TRUE, title = 'Fracture Corr
 
 <img src="project_files/figure-gfm/unnamed-chunk-26-2.png" style="display: block; margin: auto;" />
 
-# Test/Validation Split
-
-- Becuase we have such a small dataset we will use a training size of
-  70% and test split of 30%. This is some what of a more aggressive
-  split but should help to ensure we have an adequate amount of testing
-  data.
+<br> <br>
 
 ## Test/Validation Split
 
 <hr>
+
+Because we have such a small data set we will use a training size of 70%
+and test split of 30%. This is some what of a more aggressive split but
+should help to ensure we have an adequate amount of testing data.
 
 ``` r
 library(caret)
@@ -574,40 +573,38 @@ test <- df[-trainIndex,]
 
 <hr>
 
-# Objective 1
+# **Objective 1 - Logistic Regression Model**
 
 <hr>
 
 <br>
 
-## Fit Logistic Regression Model
+**Note:** The coefficients are LOG-ODDS and not ratios. To obtain ratios
+we must exp(coef).
+
+<br>
+
+## Model 1 Additive
 
 <hr>
 
-- Note that the coefficients are LOG-ODDS and not ratios.. to obtain
-  ratios we must exp(coef)
-
-<h4>
-Base Additive Model:
-</h4>
-
 - To begin we created a model with nearly every predictor so that we
   could see at a baseline what was significant and what was not (while
-  in the presence of other variables)
+  in the presence of other variables).
 
-- ANOVA: In the presence of other variables, variables such as
-  priorfrac, age, bmi(right on the cusp of rejection), raterisk(on
-  cusp), and bonetreat are significant, while the other feats. in the
-  model are not significant at the .05 level of significance.
+  - ANOVA: In the presence of other variables, variables such as
+    priorfrac, age, bmi (right on the cusp of rejection), raterisk (on
+    cusp), and bonetreat are significant, while the other feats. in the
+    model are not significant at the .05 level of significance.
 
-- The reasoning for keeping bmi in the model is because there is
-  evidence in scientific literature that different classes of BMI tend
-  to have different levels of susceptibility to osteoporosis and thus
-  bone fractures.
+  - The reasoning for keeping bmi in the model is because there is
+    evidence in scientific literature that different classes of BMI tend
+    to have different levels of susceptibility to osteoporosis and thus
+    bone fractures.
 
-- AIC of our base.model is 393.24 (no)
+  - AIC of our base.model is 393.24 (no).
 
-# Model 1 Additive
+<br>
 
 ``` r
 library(ResourceSelection)
@@ -697,26 +694,26 @@ anova(base.model, test = "Chisq")
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-<h4>
-Base Adj. Model:
-</h4>
+<br>
+
+## Model 2 Additive
+
+<hr>
 
 - Taking what was significant in our first model (base.model) we will
   now add it to our second model (base.adj) model and compare it’s
   performance to determine which provides a better fit.
 
-- base.adj model removes 6 predictors that were in the base.model and
-  yields a slightly improved AIC of 383.12 compared to base.model AIC
-  393.24
+  - base.adj model removes 6 predictors that were in the base.model and
+    yields a slightly improved AIC of 383.12 compared to base.model AIC
+    393.24.
 
-- The p-value from our anova of 0.212 \> .05 suggests that the
-  difference in deviance between the two models is not statistically
-  significant. This means that we fail to reject the null hypothesis and
-  cannot conclude that Model 1 fits the data significantly better than
-  Model 2, even though it has more predictors. We will proceed with
-  Model 2 (base.adj model)
-
-# Model 2 Additive
+  - The p-value from our anova of 0.212 \> .05 suggests that the
+    difference in deviance between the two models is not statistically
+    significant. This means that we fail to reject the null hypothesis
+    and cannot conclude that Model 1 fits the data significantly better
+    than Model 2, even though it has more predictors. We will proceed
+    with Model 2 (base.adj model).
 
 ``` r
 base.adj <- glm(fracture~priorfrac+age+bmi+raterisk+bonetreat, data = training, family = "binomial")
@@ -772,20 +769,20 @@ anova(base.model,base.adj,test = "Chisq")
 #vif(base.adj) #no issues present
 ```
 
-<h4>
-Simple (Additive) Model - Multiple Logistic Regression fit
-</h4>
+<br>
+
+## Model 3 Additive
+
+<hr>
 
 - There are some variables that were not included in the previous two
   models, but have either shown potential visually, or would make
   “sense” to have some effect on predicting fractures. These are
   included here in this simple (additive) model.
 
-- We will take the same approach and start with this model then
-  investigate it further to determine what is significant or what can be
-  removed.
-
-# Model 3 Additive
+  - We will take the same approach and start with this model then
+    investigate it further to determine what is significant or what can
+    be removed.
 
 ``` r
 # fitting an additive multiple logistic regression model
@@ -861,38 +858,38 @@ anova(simple, test = "Chisq")
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-<h4>
-Reducing the model predictors:
-</h4>
+<br>
+
+## Model 4 Additive
+
+<hr>
 
 - Reduction of the features is based only on what was deemed
   significant.
 
-- The p-value from our anova of .1985 \> .05 suggests that the
-  difference in deviance between the two models is not statistically
-  significant. This means that we fail to reject the null hypothesis and
-  cannot conclude that Simple model fits the data significantly better
-  than red.model, even though it has more predictors. We will proceed
-  with (red.model)
+  - The p-value from our anova of .1985 \> .05 suggests that the
+    difference in deviance between the two models is not statistically
+    significant. This means that we fail to reject the null hypothesis
+    and cannot conclude that Simple model fits the data significantly
+    better than red.model, even though it has more predictors. We will
+    proceed with (red.model).
 
-- The p-value from our anova of .08925 \> .05 suggests that the
-  difference in deviance between the two models is not statistically
-  significant. This means that we fail to reject the null hypothesis and
-  cannot conclude that Base.adj fits the data significantly better than
-  red.model, even though it has more predictors. We will proceed with
-  “red.model” as our “best performing” in terms of ANOVA comparison, but
-  will still reference and use the base.adj model.
+  - The p-value from our anova of .08925 \> .05 suggests that the
+    difference in deviance between the two models is not statistically
+    significant. This means that we fail to reject the null hypothesis
+    and cannot conclude that Base.adj fits the data significantly better
+    than red.model, even though it has more predictors. We will proceed
+    with “red.model” as our “best performing” in terms of ANOVA
+    comparison, but will still reference and use the base.adj model.
 
-- although the base.adj model doesn’t perform as well as the red.model,
-  it’s features allow for real world applicability in predicting
-  fractures. While it would be nice for most of the explanation to be
-  summed up and accounted for over 4 variables the human body has many
-  factors that can contribute to bone health such as hormones,
-  lifestyle, activity level, etc. It is for these reasons that we will
-  actually proceed with both models in hand as we look for the
-  appropriate application.
-
-# Model 4 Additive
+  - Although the base.adj model doesn’t perform as well as the
+    red.model, it’s features allow for real world applicability in
+    predicting fractures. While it would be nice for most of the
+    explanation to be summed up and accounted for over 4 variables the
+    human body has many factors that can contribute to bone health such
+    as hormones, lifestyle, activity level, etc. It is for these reasons
+    that we will actually proceed with both models in hand as we look
+    for the appropriate application.
 
 ``` r
 red.model <- glm(fracture~ armassist+age+bonemed_fu+bonemed,
@@ -964,124 +961,120 @@ anova(base.adj,red.model,test = "Chisq") # FTR Null: proceed with red.model
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-# Interpretation of coefficients
+<br>
 
-<h4>
-Red.Model
-</h4>
-<h4>
-Base.Adj Model
-</h4>
+## Interpretation of Coefficients
 
-- Log-odds:
+<hr>
 
-  - AGE: The positive coefficient of 0.0342221 indicates that for every
-    one-unit increase in age, the log odds of having a fracture increase
-    by 0.0342221, holding all other predictors constant. This predictor
-    is statistically significant (p = 0.0267), meaning that age has a
-    significant effect on the probability of fracture
+**Log-Odds:**
 
-  - PRIORFRAC(YES) The positive coefficient of 0.6183073 indicates that
-    if a person has had a prior fracture (priorfrac = Yes), the log odds
-    of having a fracture increase by 0.6183073, holding all other
-    predictors constant. This predictor is also statistically
-    significant (p = 0.0322), indicating that having a prior fracture
-    increases the risk of having another fracture.
+- AGE: The positive coefficient of 0.0342221 indicates that for every
+  one-unit increase in age, the log odds of having a fracture increase
+  by 0.0342221, holding all other predictors constant. This predictor is
+  statistically significant (p = 0.0267), meaning that age has a
+  significant effect on the probability of fracture.
 
-  - HEIGHT The coefficient of -0.0008537 suggests a very small negative
-    relationship between height and the log odds of having a fracture,
-    holding all other predictors constant. However, this predictor is
-    not statistically significant (p = 0.9679), so we cannot conclude
-    that height has an impact on the probability of a fracture.
+- PRIORFRAC(YES) The positive coefficient of 0.6183073 indicates that if
+  a person has had a prior fracture (priorfrac = Yes), the log odds of
+  having a fracture increase by 0.6183073, holding all other predictors
+  constant. This predictor is also statistically significant (p =
+  0.0322), indicating that having a prior fracture increases the risk of
+  having another fracture.
 
-  - MOMFRAC(YES) The positive coefficient of 0.5171833 indicates that if
-    a person’s mother has had a fracture (momfrac = Yes), the log odds
-    of having a fracture increase by 0.5171833, holding all other
-    predictors constant. However, this predictor is not statistically
-    significant (p = 0.1449), so we cannot conclude that having a mother
-    with a fracture affects the probability of a fracture.
+- HEIGHT The coefficient of -0.0008537 suggests a very small negative
+  relationship between height and the log odds of having a fracture,
+  holding all other predictors constant. However, this predictor is not
+  statistically significant (p = 0.9679), so we cannot conclude that
+  height has an impact on the probability of a fracture.
 
-  - BONEMED(YES) The positive coefficient of 0.0169533 suggests a very
-    small positive relationship between taking bone medication (bonemed
-    = Yes) and the log odds of having a fracture, holding all other
-    predictors constant. However, this predictor is not statistically
-    significant (p = 0.9736), so we cannot conclude that taking bone
-    medication has an impact on the probability of a fracture.
+- MOMFRAC(YES) The positive coefficient of 0.5171833 indicates that if a
+  person’s mother has had a fracture (momfrac = Yes), the log odds of
+  having a fracture increase by 0.5171833, holding all other predictors
+  constant. However, this predictor is not statistically significant (p
+  = 0.1449), so we cannot conclude that having a mother with a fracture
+  affects the probability of a fracture.
 
-  - BMI The positive coefficient of 0.0332507 indicates that for every
-    one-unit increase in BMI, the log odds of having a fracture increase
-    by 0.0332507, holding all other predictors constant. However, this
-    predictor is not statistically significant (p = 0.1372), so we
-    cannot conclude that BMI has an impact on the probability of a
-    fracture.
+- BONEMED(YES) The positive coefficient of 0.0169533 suggests a very
+  small positive relationship between taking bone medication (bonemed =
+  Yes) and the log odds of having a fracture, holding all other
+  predictors constant. However, this predictor is not statistically
+  significant (p = 0.9736), so we cannot conclude that taking bone
+  medication has an impact on the probability of a fracture.
 
-  - BONEMED_FU(YES) The positive coefficient of 0.6969686 indicates that
-    if a person has follow-up bone medication (bonemed_fu = Yes), the
-    log odds of having a fracture increase by 0.6969686, holding all
-    other predictors constant. However, this predictor is not
-    statistically significant (p = 0.1646), so we cannot conclude that
-    follow-up bone medication has an impact on the probability of a
-    fracture.
+- BMI The positive coefficient of 0.0332507 indicates that for every
+  one-unit increase in BMI, the log odds of having a fracture increase
+  by 0.0332507, holding all other predictors constant. However, this
+  predictor is not statistically significant (p = 0.1372), so we cannot
+  conclude that BMI has an impact on the probability of a fracture.
 
-- Odds Ratios:
+- BONEMED_FU(YES) The positive coefficient of 0.6969686 indicates that
+  if a person has follow-up bone medication (bonemed_fu = Yes), the log
+  odds of having a fracture increase by 0.6969686, holding all other
+  predictors constant. However, this predictor is not statistically
+  significant (p = 0.1646), so we cannot conclude that follow-up bone
+  medication has an impact on the probability of a fracture.
 
-  - AGE The odds ratio for age is 1.0348 with a 95% confidence interval
-    of \[1.0040, 1.0669\]. This means that for every one-unit increase
-    in age, the odds of having a fracture increase by about 3.48%,
-    holding all other predictors constant. The confidence interval
-    suggests that the true odds ratio for age lies between 1.0040 and
-    1.0669 with 95% confidence.
+<br>
 
-  - PRIORFRAC(YES) The odds ratio for priorfracYes is 1.8555 with a 95%
-    confidence interval of \[1.0484, 3.2589\]. This means that if a
-    person has had a prior fracture (priorfrac = Yes), the odds of
-    having a fracture are about 1.8555 times higher than someone who
-    hasn’t had a prior fracture, holding all other predictors constant.
-    The confidence interval suggests that the true odds ratio for
-    priorfracYes lies between 1.0484 and 3.2589 with 95% confidence.
+**Odds Ratios:**
 
-  - HEIGHT The odds ratio for height is 0.9991 with a 95% confidence
-    interval of \[0.9582, 1.0417\]. This means that for every one-unit
-    increase in height, the odds of having a fracture decrease by about
-    0.09%, holding all other predictors constant. However, as previously
-    mentioned, the effect of height is not statistically significant.
-    The confidence interval for the height odds ratio includes 1, which
-    further supports the lack of a significant effect.
+- AGE The odds ratio for age is 1.0348 with a 95% confidence interval of
+  \[1.0040, 1.0669\]. This means that for every one-unit increase in
+  age, the odds of having a fracture increase by about 3.48%, holding
+  all other predictors constant. The confidence interval suggests that
+  the true odds ratio for age lies between 1.0040 and 1.0669 with 95%
+  confidence.
 
-  - MOMFRAC(YES) The odds ratio for momfracYes is 1.6778 with a 95%
-    confidence interval of \[0.8218, 3.3282\]. This means that if a
-    person’s mother has had a fracture (momfrac = Yes), the odds of
-    having a fracture are about 1.6778 times higher than someone whose
-    mother hasn’t had a fracture, holding all other predictors constant.
-    However, the effect of momfracYes is not statistically significant,
-    as the confidence interval includes 1.
+- PRIORFRAC(YES) The odds ratio for priorfracYes is 1.8555 with a 95%
+  confidence interval of \[1.0484, 3.2589\]. This means that if a person
+  has had a prior fracture (priorfrac = Yes), the odds of having a
+  fracture are about 1.8555 times higher than someone who hasn’t had a
+  prior fracture, holding all other predictors constant. The confidence
+  interval suggests that the true odds ratio for priorfracYes lies
+  between 1.0484 and 3.2589 with 95% confidence.
 
-  - BONEMED(YES) The odds ratio for bonemedYes is 1.0171 with a 95%
-    confidence interval of \[0.36596, 2.7755\]. This means that if a
-    person is taking bone medication (bonemed = Yes), the odds of having
-    a fracture are about 1.0171 times higher than someone who is not
-    taking bone medication, holding all other predictors constant.
-    However, the effect of bonemedYes is not statistically significant,
-    as the confidence interval includes 1.
+- HEIGHT The odds ratio for height is 0.9991 with a 95% confidence
+  interval of \[0.9582, 1.0417\]. This means that for every one-unit
+  increase in height, the odds of having a fracture decrease by about
+  0.09%, holding all other predictors constant. However, as previously
+  mentioned, the effect of height is not statistically significant. The
+  confidence interval for the height odds ratio includes 1, which
+  further supports the lack of a significant effect.
 
-  - BMI The odds ratio for BMI is 1.0338 with a 95% confidence interval
-    of \[0.9891, 1.0801\]. This means that for every one-unit increase
-    in BMI, the odds of having a fracture increase by about 3.38%,
-    holding all other predictors constant. However, the effect of BMI is
-    not statistically significant, as the confidence interval includes
-    1.
+- MOMFRAC(YES) The odds ratio for momfracYes is 1.6778 with a 95%
+  confidence interval of \[0.8218, 3.3282\]. This means that if a
+  person’s mother has had a fracture (momfrac = Yes), the odds of having
+  a fracture are about 1.6778 times higher than someone whose mother
+  hasn’t had a fracture, holding all other predictors constant. However,
+  the effect of momfracYes is not statistically significant, as the
+  confidence interval includes 1.
 
-  - BONEMED_FU(YES) The odds ratio for bonemed_fuYes is 2.0075 with a
-    95% confidence interval of \[0.7423, 5.4109\]. This means that if a
-    person has follow-up bone medication (bonemed_fu = Yes), the odds of
-    having a fracture are about 2.0075 times higher than someone who
-    does not have follow-up bone medication, holding all other
-    predictors constant. However, the effect of bonemed_fuYes is not
-    statistically significant, as the confidence interval includes 1.
+- BONEMED(YES) The odds ratio for bonemedYes is 1.0171 with a 95%
+  confidence interval of \[0.36596, 2.7755\]. This means that if a
+  person is taking bone medication (bonemed = Yes), the odds of having a
+  fracture are about 1.0171 times higher than someone who is not taking
+  bone medication, holding all other predictors constant. However, the
+  effect of bonemedYes is not statistically significant, as the
+  confidence interval includes 1.
 
-<h4>
-Practical/Statistical Significance of Important Factors
-</h4>
+- BMI The odds ratio for BMI is 1.0338 with a 95% confidence interval of
+  \[0.9891, 1.0801\]. This means that for every one-unit increase in
+  BMI, the odds of having a fracture increase by about 3.38%, holding
+  all other predictors constant. However, the effect of BMI is not
+  statistically significant, as the confidence interval includes 1.
+
+- BONEMED_FU(YES) The odds ratio for bonemed_fuYes is 2.0075 with a 95%
+  confidence interval of \[0.7423, 5.4109\]. This means that if a person
+  has follow-up bone medication (bonemed_fu = Yes), the odds of having a
+  fracture are about 2.0075 times higher than someone who does not have
+  follow-up bone medication, holding all other predictors constant.
+  However, the effect of bonemed_fuYes is not statistically significant,
+  as the confidence interval includes 1.
+
+<br>
+
+**Statistical Significance:**
 
 - Age and PriorFrac were found to be statistically significant at the
   alpha = .05 level of significance. This indicates that there is
@@ -1089,28 +1082,32 @@ Practical/Statistical Significance of Important Factors
   effect on the odds of having a fracture, and their relationship with
   the response variable is unlikely to be due to random chance.
 
-- Practical Significance:
+<br>
 
-  - AGE: The odds of having a fracture increase by about 3.48%, holding
-    all other predictors constant, for every one year increase in age.
-    This suggests that on a practical level age is an important risk
-    factor for fractures, and interventions aimed at reducing fracture
-    risk should consider age as a key factor.
+**Practical Significance:**
 
-  - Prior Fracture: If a person had a prior fracture the odds of having
-    a fracture are about 1.86 times higher, when holding all other
-    predictors constant. From a practical standpoint this indicates that
-    individuals with a history of fractures are at a significantly
-    higher risk of experiencing another fracture. it’s important to
-    identify and monitor such individuals to develop targeted
-    interventions that can help mitigate this risk.
+- AGE: The odds of having a fracture increase by about 3.48%, holding
+  all other predictors constant, for every one year increase in age.
+  This suggests that on a practical level age is an important risk
+  factor for fractures, and interventions aimed at reducing fracture
+  risk should consider age as a key factor.
 
-# Effect Plots
+- Prior Fracture: If a person had a prior fracture the odds of having a
+  fracture are about 1.86 times higher, when holding all other
+  predictors constant. From a practical standpoint this indicates that
+  individuals with a history of fractures are at a significantly higher
+  risk of experiencing another fracture. it’s important to identify and
+  monitor such individuals to develop targeted interventions that can
+  help mitigate this risk.
 
-one at a time (Additive Reduced Model):
+<br>
 
-- Because we are working with an additive model, plotting one by one is
-  ok to do without losing much information.
+## Individual Effect Plots
+
+<hr>
+
+**Note:** Because we are working with an additive model, plotting one by
+one is ok to do without losing much information.
 
 ``` r
 library(sjPlot)
@@ -1149,7 +1146,11 @@ plot(all.effects,multiline=T)
 
 <img src="project_files/figure-gfm/unnamed-chunk-32-5.png" style="display: block; margin: auto;" />
 
-Effect Plot Combo:
+<br>
+
+## Effect Plot Combos
+
+<hr>
 
 - Provides an intuitive way to understand impact of each predictor on
   the outcome, while holding the other pred. constant.
@@ -1179,14 +1180,15 @@ plot_model(red.model, type = "pred", terms = c("armassist","bonemed_fu"))
 
 <img src="project_files/figure-gfm/unnamed-chunk-33-4.png" style="display: block; margin: auto;" />
 
+<br>
+
+## ROC Curves
+
 <hr>
 
-# ROC Curve for Final Additive Model
+<br>
 
-<hr>
-<h4>
-Cross Validation & ROC Curve for Final Additive Model
-</h4>
+**Cross Validation & ROC Curve for Final Additive Model**
 
 ``` r
 library(pROC)
@@ -1319,9 +1321,7 @@ cat("\nSensitivity:", cm1$byClass[1],
 
 <br> <br>
 
-<h4>
-Second Additive Model for Comparison
-</h4>
+**Second Additive Model for Comparison**
 
 ``` r
 # parameters for train function
@@ -1404,11 +1404,9 @@ pred_label <- as.factor(ifelse(add.model.predprob$Yes > adj.threshold, "Yes","No
 
 <hr>
 
-# Objective 2
+# **Objective 2 - Competing Models**
 
 <hr>
-
-# Interaction EDA - Objective 2
 
 <br>
 
@@ -1502,9 +1500,11 @@ df %>% ggplot(aes(x = bmi, y = fracture.num, color = priorfrac )) +
 
 <img src="project_files/figure-gfm/unnamed-chunk-36-9.png" style="display: block; margin: auto;" />
 
-<h4>
-Complex Model (Interactive Model)
-</h4>
+<br>
+
+## Complex Model 1
+
+<hr>
 
 - The interaction qualification process began with visualizing various
   relationships to see if any visuals looked as if they would better be
@@ -1518,10 +1518,8 @@ Complex Model (Interactive Model)
   in the model (if they were significant) and how much they helped/hurt
   the model.
 
-- if an interaction helped the model and was significant then it was
+- If an interaction helped the model and was significant then it was
   kept, in this case it was height:bonemed_fu and bmi:bonemed.
-
-# Complex Model 1
 
 ``` r
 complex <- glm(fracture~age+priorfrac+height+momfrac+bonemed+bmi+bonemed_fu+
@@ -1572,9 +1570,11 @@ summary(complex)
 #     "\nComplex Model:", complex.aic)
 ```
 
-<h4>
-Complex Model With Cross Validation
-</h4>
+<br>
+
+## Complex Model 1 With Cross Validation
+
+<hr>
 
 ``` r
 # parameters for train function
@@ -1708,7 +1708,11 @@ cat("\nSensitivity:", cm3$byClass[1],
     ## Negative Predicive Value: 0.8791209 
     ## AUROC: 0.7326255
 
-# GLM-NET Process
+<br> <br>
+
+## GLM-NET Simple Model
+
+<hr>
 
 ``` r
 colnames(training)
@@ -1787,7 +1791,11 @@ coef(glm.fit$finalModel, opt.pen)
     ## bmi.catOverweight   0.020565675
     ## bmi.catUnderweight -0.511271527
 
-# GLM-NET Additive Model:
+<br> <br>
+
+## GLM-NET Additive Model
+
+<hr>
 
 - Using Feats from the code above we will fit the GLM model below.
 
@@ -1929,7 +1937,11 @@ cat("\nSensitivity:", cm4$byClass[1],
     ## Negative Predicive Value: 0.9135802 
     ## AUROC: 0.7636342
 
-# Complex GLM model
+<br> <br>
+
+## GLM-NET Complex Model
+
+<hr>
 
 ``` r
 # parameters for train function
@@ -2077,7 +2089,11 @@ cat("\nSensitivity:", cm5$byClass[1],
     ## Negative Predicive Value: 0.8791209 
     ## AUROC: 0.7520512
 
-# KNN - Non-parametric model
+<br> <br>
+
+## KNN - Non-Parametric Model
+
+<hr>
 
 ``` r
 knn.df <- training[,-c(1)]
@@ -2163,7 +2179,11 @@ cat("\nSensitivity:", cm6$byClass[1],
     ## Negative Predicive Value: 0.7407407 
     ## AUROC: 0.5874759
 
-# LASSO Process
+<br> <br>
+
+## LASSO Simple Model
+
+<hr>
 
 ``` r
 set.seed(12)
@@ -2260,7 +2280,11 @@ coef(lasso.fit$finalModel, opt.pen)
     ## bmi.catOverweight   .         
     ## bmi.catUnderweight -0.08213559
 
-# LASSO Additive Model
+<br> <br>
+
+## LASSO Additive Model
+
+<hr>
 
 ``` r
 lasso.model <- glm(fracture ~ priorfrac+ raterisk + bonemed_fu + fracscore + bmi.cat,
@@ -2413,9 +2437,13 @@ cat("\nSensitivity:", cm1$byClass[1],
     ## Negative Predicive Value: 0.7569444 
     ## AUROC: 0.7636342
 
-# LDA/QDA Assumption Checking
+<br> <br>
 
-- The assumptions don’t look adequate for LDA/QDA model?
+## LDA/QDA Models
+
+<hr>
+
+- The assumptions don’t look adequate for LDA/QDA model.
 - Non-parametric (KNN) would be more adequate?
 
 ``` r
@@ -2494,7 +2522,11 @@ num.df %>% ggplot(aes(x = bmi, y = fracscore, color = as.factor(fracture.num)))+
 
 <img src="project_files/figure-gfm/unnamed-chunk-45-10.png" style="display: block; margin: auto;" />
 
-# QDA Model Additive
+<br> <br>
+
+## QDA Model Additive
+
+<hr>
 
 ``` r
 fitControl <- trainControl(method="repeatedcv",

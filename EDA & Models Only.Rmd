@@ -1,9 +1,9 @@
 ---
 always_allow_html: TRUE
 output: 
+  github_document: default
   html_document: 
     code_folding: hide
-  github_document: default
 ---
 
 <hr>
@@ -430,8 +430,8 @@ lp6 <- df %>% ggplot(aes(x = bmi, fracture.num)) +
 g3<- grid.arrange(lp,lp1,lp2,ncol(2) )
 g4<- grid.arrange(lp3,lp4,lp5,lp6,
              heights = c(1,1))
-ggsave("g3.jpg",g3)
-ggsave("g4.jpg",g4)
+# ggsave("g3.jpg",g3)
+# ggsave("g4.jpg",g4)
 
 ```
 
